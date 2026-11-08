@@ -1,0 +1,17 @@
+{
+  "name": "MATH DRIFT 峠の数学エンジニア",
+  "short_name": "MATH DRIFT",
+  "description": "中学数学（東京書籍準拠）を車とレースの世界で学ぶ学習ゲーム",
+  "start_url": "./index.html#/home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "lang": "ja",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

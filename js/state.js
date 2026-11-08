@@ -1,0 +1,101 @@
+// 保存データ管理（localStorage）
+const KEY = 'mathdrift.save';
+export const SAVE_VERSION = 1;
+
+function defaults() {
+  return {
+    version: SAVE_VERSION,
+    created: Date.now(),
+    profile: { name: '', started: false },
+    gp: 300,
+    xp: 0,
+    login: { last: '', streak: 0, total: 0, pending: null },
+    daily: { date: '', tasks: [], counts: {}, bonusClaimed: false },
+    progress: {},      // stepId: {stars, best, cleared, hintless}
+    battles: {},       // chapterId: {cleared, best}
+    history: {},       // problemId: {status, tries, wrong, last}
+    memos: {},         // problemId: {strokes:[], text:''}
+    seenStory: {},     // sceneId: true
+    achievements: {},  // id: timestamp
+    stats: { correct: 0, answered: 0, revenge: 0, perfect: 0, customs: 0 },
+    garage: {
+      current: 'ae86',
+      ownedCars: ['ae86'],
+      ownedParts: ['color-white', 'color-black', 'color-red', 'wheel-steel', 'wheel-mesh'],
+      cars: {}
+    },
+    settings: { fs: 'm', contrast: 'normal', sound: true, anim: true, timer: false }
+  };
+}
+
+function merge(base, data) {
+  if (!data || typeof data !== 'object') return base;
+  for (const k of Object.keys(base)) {
+    if (data[k] === undefined) continue;
+    if (base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]) && typeof data[k] === 'object' && !Array.isArray(data[k])) {
+      base[k] = merge(base[k], data[k]);
+    } else {
+      base[k] = data[k];
+    }
+  }
+  // 未知キーも保持（progressなど動的キー）
+  for (const k of Object.keys(data)) if (base[k] === undefined) base[k] = data[k];
+  return base;
+}
+
+function migrate(data) {
+  // 将来のバージョン移行用
+  data.version = SAVE_VERSION;
+  return data;
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defaults();
+    return migrate(merge(defaults(), JSON.parse(raw)));
+  } catch (e) {
+    console.warn('load failed', e);
+    return defaults();
+  }
+}
+
+export const state = load();
+
+let saveTimer = null;
+export function save(immediate = false) {
+  const run = () => {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { console.warn('save failed', e); window.dispatchEvent(new CustomEvent('save-error')); }
+  };
+  clearTimeout(saveTimer);
+  if (immediate) run(); else saveTimer = setTimeout(run, 150);
+}
+window.addEventListener('pagehide', () => save(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
+
+export function exportJSON() {
+  return JSON.stringify(state, null, 0);
+}
+export function importJSON(text) {
+  const data = JSON.parse(text);
+  if (!data || typeof data !== 'object' || !data.garage) throw new Error('バックアップファイルの形式が違います');
+  const fresh = migrate(merge(defaults(), data));
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, fresh);
+  save(true);
+}
+export function resetAll() {
+  localStorage.removeItem(KEY);
+  const fresh = defaults();
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, fresh);
+  save(true);
+}
+
+export function dateStr(d = new Date()) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+export function today() { return dateStr(); }
+export function yesterday() { const d = new Date(); d.setDate(d.getDate() - 1); return dateStr(d); }

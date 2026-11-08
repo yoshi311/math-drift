@@ -1,0 +1,6 @@
+<!doctype html><html><body style="background:#111;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font:12px sans-serif;color:#fff">
+<script type="module">
+import {CARS} from '../data/cars.js'; import {carSVG} from '../js/components/car-render.js';
+const v=[{},{wing:3,lip:3,skirt:2,height:-5,wheel:'6spoke',inch:18,neon:'#00e5ff',livery:'number',tint:2,bonnet:true},{wing:2,livery:'fire',wheel:'deep',wcolor:'#e2b33c',inch:17,height:-3},{wing:1,livery:'stripe',wheel:'disc',tone:true}];
+CARS.forEach((c,i)=>{const d=document.createElement('div');d.innerHTML=c.id+carSVG(c.id,v[i%4]);document.body.appendChild(d)});
+</script></body></html>
