@@ -8,6 +8,7 @@ const { GRADES, problems, steps } = await import('../data/curriculum/index.js');
 const { gradeValue } = await import('../js/mathfmt.js');
 
 let errors = 0, warns = 0;
+const CAR = /車|カー|レース|タイヤ|エンジン|ホイール|ガレージ|サーキット|峠|コース|ラップ|タイム|周|ドリフト|チューン|チューニング|パーツ|ウイング|エアロ|燃料|ガソリン|燃費|ギア|スプロケット|マフラー|ブレーキ|ピット|パドック|ドライバー|スピード|速さ|速度|時速|走|バトル|ライバル|ハンドル|ボディ|塗装|ステッカー|ターボ|馬力|排気|気筒|タンク|メカ|整備|ミオ|カイト|ゲン|源一郎|チーム|ゴール|スタート|コーナー|カーブ|オイル|ゼッケン|ピストン|ボルト|ナット|ステアリング|シフト|ブースト|ボンネット|ストレート|空力|クルー|バルブ|プラグ|セッティング|ECU|セクター|サスペンション|バネ|重量配分|GP|ロールケージ|ジャッキ|工具|テレメトリー|メーター|トランク|パイロン|ノーズコーン|ボールジョイント|予算|ワイパー|ヒューズ|スタンド|観客/;
 const err = (p, m) => { errors++; console.log('ERROR', p, m); };
 const warn = (p, m) => { warns++; console.log('WARN ', p, m); };
 
@@ -35,6 +36,8 @@ for (const p of Object.values(problems)) {
   // 波かっこの対応
   const txt = [p.q, ...(p.explain || []), ...(p.options || [])].join(' ');
   if ((txt.match(/\{/g) || []).length !== (txt.match(/\}/g) || []).length) warn(p.id, 'unbalanced braces');
+  // すべての問題文に車の話題が入っているか
+  if (p.q && !CAR.test(p.q)) err(p.id, 'question has no car topic: ' + p.q.slice(0, 40));
 }
 
 let total = 0;
