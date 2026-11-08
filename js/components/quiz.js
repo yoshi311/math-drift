@@ -1,7 +1,7 @@
 // 問題を解く画面（共通エンジン）
 import { $, $$, esc, shuffle, sfx, toast, confirmBox } from '../util.js';
-import { fmt, fmtInput, gradeValue } from '../mathfmt.js';
-import { keypadHTML, applyKey, bindHardwareKeys } from './keypad.js';
+import { fmt, gradeValue } from '../mathfmt.js';
+import { keypadHTML, MathInput, fracKeyLabel, bindHardwareKeys } from './keypad.js';
 import { createMemo } from './memo.js';
 import { recordAnswer } from '../gamify.js';
 import { state } from '../state.js';
@@ -72,7 +72,7 @@ export function runQuiz(root, opts) {
     if (memo) { memo.destroy(); memo = null; }
     if (idx >= queue.length) return finish();
     const { p, retry } = queue[idx];
-    cur = { p, retry, answered: false, value: '', values: (p.fields || []).map(() => ''), focus: 0, sel: null, order: [], hint: false };
+    cur = { p, retry, answered: false, value: new MathInput(), values: (p.fields || []).map(() => new MathInput()), focus: 0, sel: null, order: [], hint: false };
     hintLv = 0;
     hintEl.classList.add('hidden'); hintEl.innerHTML = '';
     const no = retry ? 'RETRY' : `Q${opts.problems.indexOf(p) + 1}`;
@@ -133,19 +133,20 @@ export function runQuiz(root, opts) {
   function updateDisplay() {
     const p = cur.p;
     if (p.type === 'num' || p.type === 'expr') {
-      $('.answer-box .val', apane).innerHTML = fmtInput(cur.value) + (cur.answered ? '' : '<span class="caret"></span>');
+      $('.answer-box .val', apane).innerHTML = cur.value.html(!cur.answered);
     } else if (p.type === 'fields') {
       $$('.answer-box', apane).forEach((b, i) => {
         b.classList.toggle('focus', i === cur.focus && !cur.answered);
-        $('.val', b).innerHTML = fmtInput(cur.values[i]) + (i === cur.focus && !cur.answered ? '<span class="caret"></span>' : '');
+        $('.val', b).innerHTML = cur.values[i].html(i === cur.focus && !cur.answered);
       });
     }
+    const fk = $('.fkey', apane);
+    if (fk) { const inp = p.type === 'fields' ? cur.values[cur.focus] : cur.value; fk.innerHTML = fracKeyLabel(inp && inp.mode); fk.classList.toggle('fon', !!(inp && inp.mode)); }
   }
 
   function pressKey(k) {
     sfx.tap();
-    if (cur.p.type === 'fields') cur.values[cur.focus] = applyKey(cur.values[cur.focus], k);
-    else cur.value = applyKey(cur.value, k);
+    (cur.p.type === 'fields' ? cur.values[cur.focus] : cur.value).press(k);
     updateDisplay();
   }
 
@@ -175,9 +176,9 @@ export function runQuiz(root, opts) {
 
   function grade() {
     const p = cur.p;
-    if (p.type === 'num' || p.type === 'expr') return gradeValue(cur.value, p.answer, p.type, p);
+    if (p.type === 'num' || p.type === 'expr') return gradeValue(cur.value.toString(), p.answer, p.type, p);
     if (p.type === 'fields') {
-      const rs = p.fields.map((f, i) => gradeValue(cur.values[i], f.answer, f.kind, p));
+      const rs = p.fields.map((f, i) => gradeValue(cur.values[i].toString(), f.answer, f.kind, p));
       if (rs.some(r => r.empty)) return { ok: false, msg: 'すべての欄に入力しよう', empty: true };
       const bad = rs.findIndex(r => !r.ok);
       return bad < 0 ? { ok: true } : { ok: false, msg: rs[bad].msg ? `${p.fields[bad].pre} ${rs[bad].msg}` : `${p.fields[bad].pre} の欄がちがうよ`, per: rs.map(r => r.ok) };

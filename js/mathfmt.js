@@ -13,16 +13,6 @@ export function fmt(s) {
   return t;
 }
 
-// 入力文字列を表示用に整形（キーパッド入力）
-export function fmtInput(s) {
-  if (!s) return '';
-  let t = esc(s).replace(/-/g, '−').replace(/\*/g, '×');
-  // 分数表示: 数/数 または 文字/数 を縦に
-  t = t.replace(/([0-9a-zπ.]+|\([^()]*\))\/([0-9.]+|[a-zπ]|)/g, (_, a, b) => `<span class="frac"><span>${a}</span><span>${b || '&nbsp;'}</span></span>`);
-  t = t.replace(/\^([0-9]+)/g, '<sup>$1</sup>').replace(/\^$/, '<sup>□</sup>');
-  return t;
-}
-
 // ===== 有理数 =====
 function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; }
 export function parseRational(s) {

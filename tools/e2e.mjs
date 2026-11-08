@@ -48,7 +48,8 @@ async function answerCurrent(wrong = false) {
     const {problems}=await import('./data/curriculum/index.js');
     const p=problems[pid]; const W=${wrong};
     const key=k=>{const b=[...document.querySelectorAll('[data-key]')].find(b=>b.dataset.key===k); if(!b) throw new Error('key '+k+' for '+pid); b.click();};
-    const typeStr=s=>{ s=String(s).replace(/<=/g,'≦').replace(/>=/g,'≧').replace(/\\*/g,'×'); for(const ch of s) key(ch); };
+    const {keysFor}=await import('./js/components/keypad.js');
+    const typeStr=s=>{ for(const k of keysFor(s)) key(k); };
     if(p.type==='num'||p.type==='expr'){ const a=Array.isArray(p.answer)?p.answer[0]:p.answer; typeStr(W?(p.type==='num'?'99':'9x'):a); }
     else if(p.type==='fields'){ p.fields.forEach((f,i)=>{document.querySelector('[data-field="'+i+'"]').click(); typeStr(W?'7':f.answer);}); }
     else if(p.type==='choice'){ const t=W?(p.answer+1)%p.options.length:p.answer; document.querySelector('[data-opt="'+t+'"]').click(); }
