@@ -2,14 +2,14 @@
 import { state, save } from '../state.js';
 import { esc, sfx, $, toast } from '../util.js';
 import { go } from '../router.js';
-import { topbar, stars } from '../ui.js';
+import { topbar, stars, chara } from '../ui.js';
 import { fmt } from '../mathfmt.js';
 import { steps, chapters, nextStep } from '../../data/curriculum/index.js';
 import { runQuiz } from '../components/quiz.js';
 import { addGP, track, checkAchievements } from '../gamify.js';
 import { carSVG, getConfig } from '../components/car-render.js';
 import { carById } from '../../data/cars.js';
-import { CHARS } from '../../data/story/g1.js';
+import { CHARS } from '../../data/story/index.js';
 import { playStory, hasScene } from './story.js';
 
 export function briefHTML(st) {
@@ -111,6 +111,8 @@ export function stepScreen(app, { id }) {
     app.innerHTML = `${topbar(`${st.label}　${esc(st.title)}`, { back: `#/chapter/${ch.id}` })}
     <div class="page result-page">
       <div class="result-hero ${s > 0 ? 'win' : 'lose'}">
+        <div class="rh-chara">${chara(s > 0 ? 'mio' : 'gen', s > 0 ? 'smile' : 'serious')}</div>
+        <div class="en rh-pos">${['DNF', 'P3', 'P2', 'P1'][s]}</div>
         <div class="en rh-label">${s > 0 ? 'SECTOR CLEAR' : 'TRY AGAIN'}</div>
         <div class="rh-score en">${ok}<small> / ${total}</small></div>
         <div class="rh-stars">${stars(s)}</div>
@@ -146,10 +148,14 @@ export function battleScreen(app, { id }) {
 
   app.innerHTML = `${topbar(`RIVAL BATTLE　STAGE ${ch.no}`, { back: `#/chapter/${ch.id}` })}
   <div class="page battle-intro">
-    <div class="vs-wrap">
-      <div class="vs-side me"><div class="vs-car">${carSVG(my.id, getConfig(state, my.id))}</div><b>${esc(state.profile.name)}</b><small>${esc(my.name)}</small></div>
+    <div class="vs-screen" style="--rc:${rch.color}">
+      <div class="vs-half me"><div class="vs-chara">${chara('kaito', 'serious')}</div>
+        <div class="vs-plate"><span class="en">TAKAMIYA FACTORY</span><b>${esc(state.profile.name)} ＆ 蒼井 カイト</b><small>${esc(my.name)}</small></div>
+        <div class="vs-car">${carSVG(my.id, getConfig(state, my.id))}</div></div>
       <div class="vs en">VS</div>
-      <div class="vs-side rival"><div class="vs-car flip">${carSVG(rc.id, {})}</div><b style="color:${rch.color}">${esc(rch.name)}</b><small>${esc(rc.name)}</small></div>
+      <div class="vs-half rival"><div class="vs-chara">${chara(ch.rival.char, 'angry')}</div>
+        <div class="vs-plate"><span class="en">${esc(rch.role)}</span><b style="color:${rch.color}">${esc(rch.name)}</b><small>${esc(rc.name)}</small></div>
+        <div class="vs-car flip">${carSVG(rc.id, {})}</div></div>
     </div>
     <div class="panel center">
       <h2>${esc(ch.stage)}</h2>
@@ -162,6 +168,14 @@ export function battleScreen(app, { id }) {
   function start() {
     sfx.rev();
     track('battle');
+    if (state.settings.anim) {
+      const cut = document.createElement('div');
+      cut.className = 'cutin';
+      cut.style.setProperty('--c', rch.color);
+      cut.innerHTML = `<div class="cutin-band"><div class="cutin-chara">${chara(ch.rival.char, 'angry')}</div><div class="cutin-text en">BATTLE<br>START</div></div>`;
+      document.body.appendChild(cut);
+      setTimeout(() => cut.remove(), 1500);
+    }
     const total = ch.battle.length;
     let mine = 0, answered = 0;
     const header = `<div class="race"><div class="lane"><div class="lane-car me" style="left:0%">${carSVG(my.id, getConfig(state, my.id))}</div></div>
@@ -200,6 +214,8 @@ export function battleScreen(app, { id }) {
     app.innerHTML = `${topbar(`RIVAL BATTLE　STAGE ${ch.no}`, { back: `#/chapter/${ch.id}` })}
     <div class="page result-page">
       <div class="result-hero ${win ? 'win' : 'lose'}">
+        <div class="rh-chara">${chara(win ? 'kaito' : ch.rival.char, win ? 'smile' : 'smile')}</div>
+        <div class="en rh-pos">${win ? 'P1' : 'P2'}</div>
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
         <div class="muted">${ok} / ${total} 問正解　${win ? '' : '（7割で勝利）'}</div>

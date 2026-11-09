@@ -137,7 +137,7 @@ async function runQuizToEnd(wrongIdx = new Set(), label = '') {
   const wrongN = await ev(`document.querySelectorAll('.pit-item').length`);
   assert(wrongN >= 5, 'pit lists wrong problems: ' + wrongN);
   await click('[data-act=revenge]'); await sleep(300);
-  await runQuizToEnd(new Set(), 'revenge');
+  await runQuizToEnd(new Set(), 'revenge'); await sleep(600);
   const st2 = await ev(`JSON.parse(localStorage.getItem('mathdrift.save'))`);
   assert(st2.stats.revenge >= 5, 'revenge count ' + st2.stats.revenge);
 

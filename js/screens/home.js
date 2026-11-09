@@ -2,7 +2,7 @@
 import { state, save } from '../state.js';
 import { esc, modal, sfx, fmtNum, $ } from '../util.js';
 import { go } from '../router.js';
-import { topbar, sceneBg } from '../ui.js';
+import { topbar, sceneBg, chara, gauge } from '../ui.js';
 import { carSVG, getConfig } from '../components/car-render.js';
 import { carById } from '../../data/cars.js';
 import { rankInfo, checkLogin, claimLogin, ensureDaily, LOGIN_REWARDS, DAILY_BONUS } from '../gamify.js';
@@ -50,17 +50,21 @@ export function homeScreen(app) {
 
   app.innerHTML = `${topbar('<span class="en logo-mini">MATH<b>DRIFT</b></span>', { back: '' })}
   <div class="page home">
-    <section class="panel neon home-hero">
+    <section class="panel neon home-hero hud">
       <div class="hero-bg">${sceneBg('garage')}</div>
-      <div class="hero-info">
-        <div class="hero-name">${esc(state.profile.name)}<small> / TAKAMIYA FACTORY</small></div>
-        <div class="rank-row"><span class="rank-badge en">${r.name}</span>
-          <div class="grow"><div class="progress"><div style="width:${Math.round(r.pct * 100)}%"></div></div>
-          <div class="muted small">${r.next ? `次のランク ${r.next} まで ${fmtNum(r.toNext)} XP` : '最高ランク到達！'}</div></div>
+      <div class="hero-lines"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="hero-top">
+        <div class="hero-gauge ${r.name.length > 3 ? 'long' : ''}">${gauge(r.pct, r.name, 'DRIVER RANK')}</div>
+        <div class="hero-info">
+          <div class="en hud-label">CHIEF ENGINEER</div>
+          <div class="hero-name">${esc(state.profile.name)}</div>
+          <div class="en hero-team">TAKAMIYA FACTORY</div>
+          <div class="muted small">${r.next ? `NEXT ${r.next} まで ${fmtNum(r.toNext)} XP` : '最高ランク到達！'}</div>
         </div>
+        <div class="hero-me">${chara('me', 'smile')}</div>
       </div>
       <a class="hero-car" href="#/garage">${carSVG(car.id, getConfig(state, car.id))}</a>
-      <div class="hero-carname"><span class="chip c">${car.maker}</span> ${esc(car.name)}</div>
+      <div class="hero-carname"><span class="en">${esc(car.maker)}</span> ${esc(car.name)}</div>
       <div class="hero-stats">
         <div><b class="en">${cleared}</b><span>/${totalSteps} STEP</span></div>
         <div><b class="en">${state.stats.correct}</b><span>正解数</span></div>
@@ -70,9 +74,11 @@ export function homeScreen(app) {
 
     <section class="home-menu">
       ${rec ? `<a class="menu-big" href="#/step/${rec.id}">
-        <span class="mb-label en">NEXT RUN</span>
+        <span class="mb-chara">${chara('kaito', 'normal')}</span>
+        <span class="mb-label en">NEXT RACE</span>
         <span class="mb-title">${esc(rec.label)} ${esc(rec.title)}</span>
-        <span class="mb-sub">${esc(rec.sectionTitle)}</span></a>` : `<a class="menu-big" href="#/map"><span class="mb-label en">ALL CLEAR</span><span class="mb-title">全ステップクリア！ 復習で★3を目指そう</span></a>`}
+        <span class="mb-sub">${esc(rec.sectionTitle)}</span>
+        <span class="mb-say">「準備はできてる。作戦を頼むぞ」</span></a>` : `<a class="menu-big" href="#/map"><span class="mb-chara">${chara('kaito', 'smile')}</span><span class="mb-label en">ALL CLEAR</span><span class="mb-title">全ステップクリア！ 復習で★3を目指そう</span></a>`}
       <a class="menu-btn m-map" href="#/map"><span class="mi">🗺</span><b>コースマップ</b><small>章・ステップを選ぶ</small></a>
       <a class="menu-btn m-pit" href="#/pit"><span class="mi">🔧</span><b>ピットイン</b><small>復習・解き直し${wrongCount ? `<em class="badge">${wrongCount}</em>` : ''}</small></a>
       <a class="menu-btn m-garage" href="#/garage"><span class="mi">🚗</span><b>ガレージ</b><small>カスタム・車を買う</small></a>

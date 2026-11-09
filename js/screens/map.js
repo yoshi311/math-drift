@@ -1,9 +1,9 @@
 // コースマップ・章画面
 import { state } from '../state.js';
 import { esc, $ } from '../util.js';
-import { topbar, stars } from '../ui.js';
+import { topbar, stars, chara } from '../ui.js';
 import { GRADES, chapters } from '../../data/curriculum/index.js';
-import { CHARS } from '../../data/story/g1.js';
+import { CHARS } from '../../data/story/index.js';
 import { carSVG } from '../components/car-render.js';
 import { carById } from '../../data/cars.js';
 import { playStory, hasScene } from './story.js';
@@ -24,10 +24,15 @@ export function mapScreen(app) {
       <div class="tabs grade-tabs">${GRADES.map(x => `<button class="tab ${x.id === gradeTab ? 'on' : ''}" data-g="${x.id}">${x.name}　${x.title}</button>`).join('')}</div>
       <div class="grade-head"><div class="en grade-sub">${g.sub}</div><h2>${g.name}　${g.title}</h2></div>
       ${g.soon ? `<div class="panel center soon"><div class="en" style="font-size:2em;color:var(--yellow)">COMING SOON</div><p>${g.name}のステージは準備中。中1を制覇して待っていよう！</p></div>` : `
+      <div class="route">${g.chapters.map(ch => {
+        const p = chProgress(ch);
+        return `<a class="route-node ${p.battle ? 'beat' : p.cleared ? 'run' : ''}" href="#/chapter/${ch.id}"><i></i><span class="en">S${ch.no}</span></a>`;
+      }).join('<b class="route-line"></b>')}</div>
       <div class="chapter-grid">${g.chapters.map(ch => {
         const p = chProgress(ch);
         const rc = carById(ch.rival.car);
-        return `<a class="ch-card ${p.battle ? 'beat' : ''}" href="#/chapter/${ch.id}">
+        return `<a class="ch-card ${p.battle ? 'beat' : ''}" href="#/chapter/${ch.id}" style="--c:${CHARS[ch.rival.char].color}">
+          <div class="ch-chara">${chara(ch.rival.char, p.battle ? 'smile' : 'serious')}</div>
           <div class="ch-no en">STAGE ${ch.no}</div>
           <div class="ch-title">${esc(ch.title)}</div>
           <div class="ch-stage">${esc(ch.stage)}</div>
@@ -63,7 +68,7 @@ export function chapterScreen(app, { id }) {
           ${p.battle && hasScene(id + '-outro') ? `<button class="btn btn-sm" data-story="${id}-outro">▶ 勝利後</button>` : ''}
         </div>
       </div>
-      <div class="ch-hero-r">${carSVG(rc.id, {})}<div class="ch-rival"><span style="color:${rch.color}">${esc(rch.name)}</span><small>${esc(rch.role)}／${esc(rc.name)}</small></div></div>
+      <div class="ch-hero-r" style="--c:${rch.color}"><div class="ch-hero-chara">${chara(ch.rival.char, p.battle ? 'smile' : 'serious')}</div>${carSVG(rc.id, {})}<div class="ch-rival"><span style="color:${rch.color}">${esc(rch.name)}</span><small>${esc(rch.role)}／${esc(rc.name)}</small></div></div>
     </section>
     ${ch.sections.map(sec => `
       <section class="sec">

@@ -1,6 +1,8 @@
 // 画面共通パーツ
 import { state } from './state.js';
 import { fmtNum, esc } from './util.js';
+import { CHARS } from '../data/story/index.js';
+import { charaSVG, meLook } from './components/chara.js';
 
 export function topbar(title, { back = '#/home', right = '' } = {}) {
   return `<div class="topbar">
@@ -61,13 +63,23 @@ export function sceneBg(kind = 'pass-night') {
     <rect width="1200" height="700" fill="url(#sky)"/>${extra}</svg>`;
 }
 
-// キャラクターのシルエット
-export function portrait(color, initial = '') {
-  return `<svg viewBox="0 0 120 140" class="portrait" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="pg${color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".95"/><stop offset="1" stop-color="${color}" stop-opacity=".25"/></linearGradient></defs>
-    <path d="M10,140 C10,100 30,88 60,88 C90,88 110,100 110,140Z" fill="url(#pg${color.slice(1)})"/>
-    <circle cx="60" cy="52" r="30" fill="url(#pg${color.slice(1)})"/>
-    <path d="M30,46 C32,20 88,18 90,46 C80,34 44,32 30,46Z" fill="${color}"/>
-    <text x="60" y="128" text-anchor="middle" font-family="Orbitron" font-weight="900" font-size="18" fill="#000" opacity=".55">${initial}</text>
-  </svg>`;
+// キャラクターの立ち絵
+export function chara(key, expr = 'normal') {
+  const c = CHARS[key];
+  if (!c || !c.look) return '';
+  return charaSVG(c.look === 'me' ? meLook(state.profile) : c.look, expr);
+}
+
+// タコメーター風のリングゲージ
+export function gauge(pct, big, small = '', color = 'var(--cyan)') {
+  const r = 52, len = Math.PI * 2 * r * 0.75, p = Math.max(0, Math.min(1, pct));
+  const ticks = Array.from({ length: 13 }, (_, i) => {
+    const a = (135 + i * 22.5) * Math.PI / 180, r1 = 62, r2 = i % 3 ? 58 : 54;
+    return `<line x1="${70 + Math.cos(a) * r1}" y1="${70 + Math.sin(a) * r1}" x2="${70 + Math.cos(a) * r2}" y2="${70 + Math.sin(a) * r2}" stroke="${i >= 10 ? '#ff2d55' : '#5b6684'}" stroke-width="2"/>`;
+  }).join('');
+  return `<svg class="gauge" viewBox="0 0 140 140" aria-hidden="true">${ticks}
+    <circle cx="70" cy="70" r="${r}" fill="none" stroke="#1c2233" stroke-width="9" stroke-dasharray="${len} 999" transform="rotate(135 70 70)" stroke-linecap="round"/>
+    <circle cx="70" cy="70" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${len * p} 999" transform="rotate(135 70 70)" stroke-linecap="round" class="gauge-arc"/>
+    <text x="70" y="76" text-anchor="middle" class="gauge-big">${big}</text>
+    <text x="70" y="98" text-anchor="middle" class="gauge-small">${small}</text></svg>`;
 }

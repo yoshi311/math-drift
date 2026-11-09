@@ -26,6 +26,7 @@ export function render() {
       const params = {}; r.keys.forEach((k, i) => params[k] = decodeURIComponent(m[i + 1]));
       app.innerHTML = '';
       window.scrollTo(0, 0);
+      app.classList.remove('screen-in'); void app.offsetWidth; app.classList.add('screen-in');
       cleanup = r.handler(app, params) || null;
       return;
     }
