@@ -154,6 +154,15 @@ async function runQuizToEnd(wrongIdx = new Set(), label = '') {
   const st3 = await ev(`JSON.parse(localStorage.getItem('mathdrift.save'))`);
   assert(st3.garage.ownedCars.includes('s13'), 'S13 unlocked');
 
+  // 中2のバトル（最終章）
+  await ev(`location.hash='#/battle/g2-c7'`); await sleep(500);
+  await click('#go'); await sleep(400);
+  await runQuizToEnd(new Set(), 'battle g2');
+  await sleep(1500);
+  if (await exists('.story')) { await shot('e2e-story-g2'); await click('.story-skip'); await sleep(500); }
+  const st3b = await ev(`JSON.parse(localStorage.getItem('mathdrift.save'))`);
+  assert(st3b.garage.ownedCars.includes('lfa'), 'LFA unlocked (g2 final)');
+
   // ガレージ：パーツ購入
   await ev(`location.hash='#/garage'`); await sleep(500);
   await click('[data-tab=wing]'); await sleep(100);

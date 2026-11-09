@@ -175,7 +175,7 @@ export function dealerScreen(app) {
         let foot;
         if (own) foot = `<button class="btn btn-sm" data-ride="${c.id}">${state.garage.current === c.id ? '乗車中' : 'この車に乗る'}</button>`;
         else if (c.price) foot = `<button class="btn btn-sm btn-yellow" data-buycar="${c.id}">${fmtNum(c.price)} GP で購入</button>`;
-        else if (c.unlock && chapters[c.unlock]) foot = `<span class="chip r">🔒 STAGE ${chapters[c.unlock].no} のライバルに勝つ</span>`;
+        else if (c.unlock && chapters[c.unlock]) foot = `<span class="chip r">🔒 ${chapters[c.unlock].gradeName} STAGE ${chapters[c.unlock].no} のライバルに勝つ</span>`;
         else foot = '';
         return `<div class="dealer-card ${own ? 'own' : ''}">${carSVG(c.id, own ? getConfig(state, c.id) : {})}
           <div class="dc-name"><span class="chip c">${c.maker}</span> <span class="chip">${c.tag}</span><br><b>${esc(c.name)}</b></div>

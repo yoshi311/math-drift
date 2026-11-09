@@ -76,7 +76,9 @@ export class MathInput {
       if (typeof s === 'string') { out += s; continue; }
       let num = s.num, sign = '';
       if (/^-[0-9a-zπ.^]+$/.test(num)) { sign = '-'; num = num.slice(1); }
-      let f = `${sign}${wrap(num)}/${wrap(s.den)}`;
+      // 分母は「数1つ」か「文字1つ」以外ならかっこでくくる（a/2x → a/(2x)）
+      const den = /^([0-9.]+|[a-zπ])$/.test(s.den) ? s.den : `(${s.den})`;
+      let f = `${sign}${wrap(num)}/${den}`;
       if (/[0-9a-zπ.)]$/.test(out)) f = `(${f})`; // 直前が数や文字ならかっこでくくる
       out += f;
     }

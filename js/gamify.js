@@ -133,6 +133,8 @@ export const ACHIEVEMENTS = [
   { id: 'step30', name: 'セクター30', desc: 'ステップを30個クリア', test: s => Object.values(s.progress).filter(p => p.cleared).length >= 30 },
   { id: 'battle1', name: '初勝利', desc: 'ライバルバトルに勝つ', test: s => Object.values(s.battles).some(b => b.cleared) },
   { id: 'battle7', name: '群馬制覇', desc: '中1のライバル全員に勝つ', test: s => Object.keys(s.battles).filter(k => k.startsWith('g1') && s.battles[k].cleared).length >= 7 },
+  { id: 'battle14', name: '箱根・湾岸制覇', desc: '中2のライバル全員に勝つ', test: s => Object.keys(s.battles).filter(k => k.startsWith('g2') && s.battles[k].cleared).length >= 7 },
+  { id: 'g2first', name: '箱根デビュー', desc: '中2のステップを初めてクリア', test: s => Object.keys(s.progress).some(k => k.startsWith('g2') && s.progress[k].cleared) },
   { id: 'perf10', name: 'パーフェクトライン', desc: 'ノーミスクリア10回', test: s => s.stats.perfect >= 10 },
   { id: 'rev10', name: 'リベンジャー', desc: '間違えた問題を10問解き直す', test: s => s.stats.revenge >= 10 },
   { id: 'rev50', name: '不屈の走り屋', desc: '間違えた問題を50問解き直す', test: s => s.stats.revenge >= 50 },
