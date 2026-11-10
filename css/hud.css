@@ -242,3 +242,9 @@ html[data-anim="off"] .hero-lines{display:none}
 .vs-half .vs-plate{position:absolute;bottom:10px;left:14px;margin:0;z-index:2}
 .vs-half.rival .vs-plate{left:auto;right:14px}
 .vs-half .vs-car{margin:0 0 34px}
+/* 3D車 */
+img.car3d{display:block;width:100%;height:auto;animation:fade .35s}
+.c3d-wait{opacity:.35;filter:blur(1px)}
+.gv-car.is3d{cursor:grab;touch-action:none}
+.car3d-view{width:100%;display:block}
+.lane-car img.car3d{width:96px;height:44px}

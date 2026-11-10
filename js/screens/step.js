@@ -178,8 +178,8 @@ export function battleScreen(app, { id }) {
     }
     const total = ch.battle.length;
     let mine = 0, answered = 0;
-    const header = `<div class="race"><div class="lane"><div class="lane-car me" style="left:0%">${carSVG(my.id, getConfig(state, my.id))}</div></div>
-      <div class="lane"><div class="lane-car rival" style="left:0%">${carSVG(rc.id, {})}</div></div><div class="goal en">GOAL</div></div>`;
+    const header = `<div class="race"><div class="lane"><div class="lane-car me" style="left:0%">${carSVG(my.id, getConfig(state, my.id), { view: "side", small: true })}</div></div>
+      <div class="lane"><div class="lane-car rival" style="left:0%">${carSVG(rc.id, {}, { view: "side", small: true })}</div></div><div class="goal en">GOAL</div></div>`;
     cleanup = runQuiz(app, {
       title: `VS ${rch.name}`, problems: ch.battle, mode: 'battle', modeLabel: 'BATTLE', header,
       onExit: () => go(`/chapter/${ch.id}`),

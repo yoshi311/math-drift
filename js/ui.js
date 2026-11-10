@@ -64,10 +64,12 @@ export function sceneBg(kind = 'pass-night') {
 }
 
 // キャラクターの立ち絵
-export function chara(key, expr = 'normal') {
+// チームは右向き、ライバルは左向き（VS画面やストーリーで向かい合う）
+const TEAM_SIDE = new Set(['me', 'kaito', 'gen', 'mio', 'jii']);
+export function chara(key, expr = 'normal', dir) {
   const c = CHARS[key];
   if (!c || !c.look) return '';
-  return charaSVG(c.look === 'me' ? meLook(state.profile) : c.look, expr);
+  return charaSVG(c.look === 'me' ? meLook(state.profile) : c.look, expr, dir ?? (TEAM_SIDE.has(key) ? 1 : -1));
 }
 
 // タコメーター風のリングゲージ

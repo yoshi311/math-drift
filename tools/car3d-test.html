@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"></head>
+<body style="background:#1b1f27;margin:0;display:grid;grid-template-columns:repeat(var(--c,3),1fr);gap:4px;font:12px sans-serif;color:#fff">
+<div id="log" style="grid-column:1/-1"></div>
+<script type="module">
+// 開発用：3D描画の確認（?c=列数 &v=1 カスタム例 &view=side &k=車種）
+import { CARS } from '../data/cars.js';
+import { renderCarImage } from '../js/components/car3d.js';
+const q = new URLSearchParams(location.search);
+document.body.style.setProperty('--c', q.get('c') || 3);
+const v = [{}, { wing: 3, lip: 3, skirt: 2, height: -5, wheel: '6spoke', inch: 18, neon: '#00e5ff', livery: 'number', tint: 2, bonnet: true }, { wing: 2, livery: 'fire', wheel: 'deep', wcolor: '#e2b33c', inch: 17, height: -3 }, { wing: 1, livery: 'stripe', wheel: 'disc', tone: true }];
+const only = q.get('k') ? q.get('k').split(',') : null;
+const log = document.getElementById('log');
+(async () => {
+  const t0 = performance.now(); let n = 0;
+  for (const [i, c] of CARS.entries()) {
+    if (only && !only.includes(c.id)) continue;
+    try {
+      const cfg = { color: c.color, color2: c.color2 || '#111', tone: !!c.tone, wheel: 'mesh', wcolor: '#c9ced6', inch: 17, height: 0, ...(q.get('v') ? v[i % 4] : {}) };
+      const url = await renderCarImage('t' + Math.random(), c.id, cfg, q.get('view') || '34');
+      const d = document.createElement('div'); d.innerHTML = `${c.id}<img src="${url}" style="width:100%;display:block">`; document.body.appendChild(d); n++;
+    } catch (e) { log.textContent += c.id + ': ' + e.message + ' / '; console.error(e); }
+  }
+  log.textContent += ` ${n} cars ${Math.round(performance.now() - t0)}ms`;
+})();
+</script></body></html>

@@ -110,7 +110,7 @@ function wingSVG(type, ax, ay, col) {
   return '';
 }
 
-export function carSVG(carId, cfg, opts = {}) {
+export function flatSVG(carId, cfg, opts = {}) {
   const car = carById(carId);
   const S = SHAPES[car.id] || SHAPES.ae86, uid = 'c' + (++uidSeq);
   cfg = { ...defaultConfig(car), ...(cfg || {}) };
@@ -286,4 +286,55 @@ export function carSVG(carId, cfg, opts = {}) {
   ${mirror}
   ${aero}
 </svg>`;
+}
+
+// ===== 3D画像への差し替え =====
+// まず平面のSVGを返し、3Dの静止画ができしだい同じ場所を <img> に置きかえる
+const V3D = 'v2';
+let use3d = null, car3dMod = null;
+const queue = [];
+let running = false;
+function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function can3d() {
+  if (use3d !== null) return use3d;
+  try { const c = document.createElement('canvas'); use3d = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { use3d = false; }
+  if (typeof location !== 'undefined' && /[?&]flat=1/.test(location.search)) use3d = false;
+  return use3d;
+}
+async function pump() {
+  if (running) return; running = true;
+  try {
+    if (!car3dMod) car3dMod = await import('./car3d.js');
+    while (queue.length) {
+      const job = queue.shift();
+      if (!document.querySelector(`[data-c3d="${job.key}"]`)) continue;
+      const url = await car3dMod.renderCarImage(job.key, job.carId, job.cfg, job.view, job.w, job.h);
+      document.querySelectorAll(`[data-c3d="${job.key}"]`).forEach(el => { el.outerHTML = imgTag(url, job.name, job.view); });
+      await new Promise(r => setTimeout(r, 0));
+    }
+  } catch (e) { console.warn('3D描画に失敗したため平面表示にします', e); use3d = false; }
+  running = false;
+}
+const imgTag = (url, name, view) => `<img class="car-svg car3d ${view === 'side' ? 'side' : ''}" src="${url}" alt="${name}" draggable="false">`;
+
+export function carSVG(carId, cfg, opts = {}) {
+  const car = carById(carId);
+  const c = { ...defaultConfig(car), ...(cfg || {}) };
+  const flat = flatSVG(carId, c, opts);
+  if (!can3d() || opts.flat) return flat;
+  const view = opts.view === 'side' ? 'side' : '34';
+  const [w, h] = opts.small ? [440, 200] : [880, 400];
+  const key = hash(V3D + car.id + JSON.stringify(c) + view + w);
+  const hit = car3dMod && car3dMod.cachedImage(key);
+  if (hit) return imgTag(hit, car.name, view);
+  queue.push({ key, carId: car.id, cfg: c, view, w, h, name: car.name });
+  setTimeout(pump, 0);
+  return flat.replace('<svg class="car-svg"', `<svg class="car-svg c3d-wait" data-c3d="${key}"`);
+}
+
+// ガレージ用の回せる3D表示（使えないときは null）
+export async function mountCarViewer(el, carId, cfg) {
+  if (!can3d()) return null;
+  try { if (!car3dMod) car3dMod = await import('./car3d.js'); return car3dMod.mountViewer(el, carId, { ...defaultConfig(carById(carId)), ...(cfg || {}) }); }
+  catch (e) { console.warn(e); return null; }
 }

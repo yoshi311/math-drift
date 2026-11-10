@@ -2,7 +2,7 @@
 import { state, save } from '../state.js';
 import { esc, confirmBox, toast, sfx, fmtNum, modal } from '../util.js';
 import { topbar } from '../ui.js';
-import { carSVG, getConfig } from '../components/car-render.js';
+import { carSVG, getConfig, mountCarViewer } from '../components/car-render.js';
 import { CARS, carById } from '../../data/cars.js';
 import { COLORS, PARTS, PART_LABELS, PART_BONUS } from '../../data/parts.js';
 import { spendGP, checkAchievements } from '../gamify.js';
@@ -26,7 +26,10 @@ function carStats(car, cfg) {
 }
 
 export function garageScreen(app) {
+  let viewer = null, seq = 0;
   const render = () => {
+    if (viewer) { viewer.dispose(); viewer = null; }
+    const my = ++seq;
     const carId = state.garage.current;
     const car = carById(carId);
     const cfg = getConfig(state, carId);
@@ -34,7 +37,7 @@ export function garageScreen(app) {
     app.innerHTML = `${topbar('🚗 ガレージ', { right: '<a class="btn btn-sm btn-yellow" href="#/dealer">カーディーラー</a>' })}
     <div class="page garage">
       <section class="garage-view panel neon">
-        <div class="gv-car">${carSVG(carId, cfg)}</div>
+        <div class="gv-car">${carSVG(carId, cfg, { flat: true })}</div>
         <div class="gv-info">
           <div><span class="chip c">${car.maker}</span> <span class="chip">${car.tag}</span> <span class="chip">${car.drive}</span></div>
           <h2>${esc(car.name)}</h2>
@@ -42,13 +45,15 @@ export function garageScreen(app) {
           <div class="statbars">${[['POWER', stt.power, 'var(--red)'], ['GRIP', stt.grip, 'var(--cyan)'], ['AERO', stt.aero, 'var(--yellow)']].map(([l, v, c]) => `<div class="sb"><span class="en">${l}</span><div class="sbar"><div style="width:${v}%;background:${c}"></div></div><b class="en">${v}</b></div>`).join('')}</div>
         </div>
       </section>
-      <section class="car-strip">${state.garage.ownedCars.map(id => `<button class="cs-item ${id === carId ? 'on' : ''}" data-car="${id}">${carSVG(id, getConfig(state, id))}<small>${esc(carById(id).name.split(' ').slice(-1)[0])}</small></button>`).join('')}
+      <section class="car-strip">${state.garage.ownedCars.map(id => `<button class="cs-item ${id === carId ? 'on' : ''}" data-car="${id}">${carSVG(id, getConfig(state, id), { small: true })}<small>${esc(carById(id).name.split(' ').slice(-1)[0])}</small></button>`).join('')}
         <a class="cs-item cs-add" href="#/dealer"><span>＋</span><small>車を増やす</small></a></section>
       <section class="panel">
         <div class="tabs">${TABS.map(t => `<button class="tab ${t === tab ? 'on' : ''}" data-tab="${t}">${PART_LABELS[t]}</button>`).join('')}</div>
         <div class="part-area">${partArea(cfg)}</div>
       </section>
     </div>`;
+    const el = app.querySelector('.gv-car');
+    mountCarViewer(el, carId, cfg).then(v => { if (!v) return; if (my !== seq || !el.isConnected) { v.dispose(); return; } viewer = v; el.classList.add('is3d'); });
   };
 
   function partArea(cfg) {
@@ -150,19 +155,19 @@ export function garageScreen(app) {
       state.garage.cars[id] = { ...(state.garage.cars[id] || {}), height: +t.value };
       save();
       const cfg = getConfig(state, id);
-      app.querySelector('.gv-car').innerHTML = carSVG(id, cfg);
+      if (viewer) viewer.update(cfg); else app.querySelector('.gv-car').innerHTML = carSVG(id, cfg, { flat: true });
       app.querySelector('.height-ctl .hc').textContent = (cfg.height > 0 ? '+' : '') + cfg.height;
     }
     if (t.dataset.color) {
       const id = state.garage.current;
       state.garage.cars[id] = { ...(state.garage.cars[id] || {}), [t.dataset.color]: t.value };
       save();
-      app.querySelector('.gv-car').innerHTML = carSVG(id, getConfig(state, id));
+      if (viewer) viewer.update(getConfig(state, id)); else app.querySelector('.gv-car').innerHTML = carSVG(id, getConfig(state, id), { flat: true });
       clearTimeout(rangeTimer); rangeTimer = setTimeout(render, 600);
     }
   }
   render();
-  return () => { app.removeEventListener('click', onClick); app.removeEventListener('input', onInput); };
+  return () => { if (viewer) viewer.dispose(); viewer = null; seq++; app.removeEventListener('click', onClick); app.removeEventListener('input', onInput); };
 }
 
 export function dealerScreen(app) {
