@@ -6,6 +6,12 @@ import { RoomEnvironment } from '../vendor/three/RoomEnvironment.js';
 import { OrbitControls } from '../vendor/three/OrbitControls.js';
 import { SHAPES } from '../../data/car-shapes.js';
 import { carById } from '../../data/cars.js';
+import { AE86, buildAE86Body, addAE86Parts, hwAt as ae86hw, topAt as ae86top } from './cars3d/ae86.js';
+
+// 実車資料から作り込んだ専用モデル（車種ID → 生成関数）
+const DETAIL = {
+  ae86: (cfg, mats) => ({ mesh: buildAE86Body(cfg, mats), hwAt: ae86hw, topAt: ae86top, hw0: AE86.hw0, parts: g => addAE86Parts(g, cfg, mats, { plate: plateTex, emblem: () => canvasTex(256, 48, gg => { gg.fillStyle = '#e8ecf0'; gg.font = '900 40px sans-serif'; gg.textAlign = 'center'; gg.textBaseline = 'middle'; gg.fillText('TRUENO', 128, 26); }) }) }),
+};
 
 const MM = 0.001;
 // 全幅（mm・公表値）
@@ -248,12 +254,18 @@ export function buildCar(carId, cfg) {
     head: new THREE.MeshStandardMaterial({ color: '#dfe9f5', emissive: '#e8f2ff', emissiveIntensity: .55, metalness: .4, roughness: .1 }),
     tail: new THREE.MeshStandardMaterial({ color: '#7a0710', emissive: '#ff1a2a', emissiveIntensity: .45, roughness: .2 }),
     amber: new THREE.MeshStandardMaterial({ color: '#ff9a1a', emissive: '#ff8a00', emissiveIntensity: .3, roughness: .3 }),
+    clear: new THREE.MeshPhysicalMaterial({ color: '#e9eef3', metalness: .3, roughness: .08, clearcoat: 1 }),
+    bumper: new THREE.MeshStandardMaterial({ color: '#16171a', metalness: .05, roughness: .62, side: THREE.DoubleSide }),
+    gap: new THREE.MeshBasicMaterial({ color: '#050506' }),
+    mirror: new THREE.MeshStandardMaterial({ color: '#c8d0da', metalness: 1, roughness: .05 }),
   };
   const root = new THREE.Group();
   const bodyG = new THREE.Group();
-  bodyG.position.y = -(cfg.height || 0) * 25 * MM;
-  const B = buildBody(S, cfg, mats);
+  bodyG.position.y = (cfg.height || 0) * 15 * MM; // 車高：マイナス＝下げる
+  const D = DETAIL[car.id];
+  const B = D ? D(cfg, mats) : buildBody(S, cfg, mats);
   bodyG.add(B.mesh);
+  if (D) B.parts(bodyG);
   const len = S.len;
   // ライト
   const lightBox = (pts, mat, rear) => {
@@ -262,10 +274,10 @@ export function buildCar(carId, cfg) {
     const lx = Math.min(140, b.x1 - b.x0 + 30), cx = rear ? b.x0 + lx / 2 - 10 : b.x1 - lx / 2 + 10;
     for (const s of [-1, 1]) bodyG.add(box(lx * MM, (y1 - y0) * MM, hw * .42 * MM, mat, cx * MM, (y0 + y1) / 2 * MM, s * hw * .6 * MM));
   };
-  if (S.head) lightBox(S.head, S.popup ? mats.amber : mats.head, false);
-  if (S.tail) lightBox(S.tail, mats.tail, true);
+  if (!D && S.head) lightBox(S.head, S.popup ? mats.amber : mats.head, false);
+  if (!D && S.tail) lightBox(S.tail, mats.tail, true);
   // グリル（前面下部の開口）とナンバープレート
-  {
+  if (!D) {
     const fx = len - 8, gy = S.rocker + 200, gh = Math.min(220, (B.topAt(len - 60) - S.rocker) * .42);
     const hw = B.hwAt(len - 60);
     bodyG.add(box(.06, gh * MM, hw * 1.05 * MM, mats.grille, (fx - 40) * MM, gy * MM, 0));
@@ -276,7 +288,7 @@ export function buildCar(carId, cfg) {
     bodyG.add(box(.05, .09, rhw * 1.3 * MM, mats.grille, 18 * MM, (S.rocker + 110) * MM, 0));
   }
   // ミラー
-  if (S.mirror) { const [mx, my] = S.mirror; const hw = B.hwAt(mx); for (const s of [-1, 1]) { bodyG.add(box(.15, .095, .05, mats.paint, mx * MM, (S.belt + 75) * MM, s * (hw * .93 + 70) * MM)); bodyG.add(box(.05, .035, .09, mats.trim, (mx + 20) * MM, (S.belt + 30) * MM, s * (hw * .93 + 25) * MM)); } }
+  if (!D && S.mirror) { const [mx, my] = S.mirror; const hw = B.hwAt(mx); for (const s of [-1, 1]) { bodyG.add(box(.15, .095, .05, mats.paint, mx * MM, (S.belt + 75) * MM, s * (hw * .93 + 70) * MM)); bodyG.add(box(.05, .035, .09, mats.trim, (mx + 20) * MM, (S.belt + 30) * MM, s * (hw * .93 + 25) * MM)); } }
   // メッキバンパー
   if (S.chrome) { bodyG.add(box(.05, .07, B.hwAt(len - 40) * 1.7 * MM, mats.chrome, (len - 4) * MM, (S.rocker + 220) * MM, 0)); bodyG.add(box(.05, .07, B.hwAt(40) * 1.7 * MM, mats.chrome, 2 * MM, (S.rocker + 260) * MM, 0)); }
   // オープンカーのフロントガラスとシート
@@ -333,7 +345,7 @@ export function buildCar(carId, cfg) {
   }
   // 接地影
   const blob = new THREE.Mesh(new THREE.PlaneGeometry(len * MM * 1.12, B.hw0 * 2 * MM * 1.35), new THREE.MeshBasicMaterial({ map: blobTex(), transparent: true, depthWrite: false }));
-  blob.rotation.x = -Math.PI / 2; blob.position.set(len / 2 * MM, .002, 0); root.add(blob);
+  blob.name = 'blob'; blob.rotation.x = -Math.PI / 2; blob.position.set(len / 2 * MM, .002, 0); root.add(blob);
   root.userData = { len: len * MM, width: B.hw0 * 2 * MM };
   return root;
 }
@@ -394,13 +406,19 @@ function engine() {
 function frame(camera, root, view) {
   const L = root.userData.len, cx = L / 2;
   camera.aspect = 2.2;
-  if (view === 'side') {
-    camera.fov = 18; camera.position.set(cx, .62, 7.4); camera.lookAt(cx, .62, 0);
+  if (view === 'tele-side' || view === 'tele-front' || view === 'tele-rear') {
+    // 開発用：写真と重ねるための、ほぼ平行投影の望遠（横幅4.6m＝880px）
+    camera.fov = 1.5; camera.far = 200;
+    const D = 80, p = { 'tele-side': [cx, .65, D], 'tele-front': [cx + D, .65, 0], 'tele-rear': [cx - D, .65, 0] }[view];
+    camera.position.set(...p); camera.lookAt(cx, .65, 0);
+  } else if (view === 'side') {
+    camera.far = 100; camera.fov = 18; camera.position.set(cx, .62, 7.4); camera.lookAt(cx, .62, 0);
   } else {
-    camera.fov = 22;
+    camera.far = 100; camera.fov = 22;
     const az = 0.9, el = 0.09, D = 6.3;
-    camera.position.set(cx + Math.sin(az) * D, .55 + Math.sin(el) * D, Math.cos(az) * D);
-    camera.lookAt(cx + .2, .6, 0);
+    const r = view === '34r' ? -1 : 1; // '34r'：斜め後ろ
+    camera.position.set(cx + r * Math.sin(az) * D, .55 + Math.sin(el) * D, Math.cos(az) * D);
+    camera.lookAt(cx + r * .2, .6, 0);
   }
   camera.updateProjectionMatrix();
 }
@@ -420,6 +438,7 @@ export async function renderCarImage(key, carId, cfg, view = '34', w = 880, h = 
   E.scene.add(root);
   E.sun.target = root; E.sun.position.set(root.userData.len / 2 + 2.5, 8, 5);
   frame(E.camera, root, view);
+  if (view.startsWith('tele')) root.traverse(o => { if (o.name === 'blob') o.visible = false; });
   E.renderer.render(E.scene, E.camera);
   const url = E.renderer.domElement.toDataURL('image/png');
   E.scene.remove(root); dispose(root);

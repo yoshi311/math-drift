@@ -31,6 +31,8 @@ const ev = async e => (await send('Runtime.evaluate', { expression: e, awaitProm
   const t0 = Date.now();
   while (Date.now() - t0 < maxSec * 1000) { await sleep(500); try { if (await ev(cond)) break; } catch {} }
   await sleep(800);
+  // DUMP=JS式（dataURLを返す）：その画像をそのまま保存（3D描画の生画像など）
+  if (process.env.DUMP) { const u = await ev(process.env.DUMP); if (u) writeFileSync(join(OUT, name + '.dump.png'), Buffer.from(u.split(',')[1], 'base64')); }
   const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   writeFileSync(join(OUT, name + '.png'), Buffer.from(r.result.data, 'base64'));
   console.log('OK', join(OUT, name + '.png'), Math.round((Date.now() - t0) / 1000) + 's');

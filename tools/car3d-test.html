@@ -15,9 +15,9 @@ const log = document.getElementById('log');
   for (const [i, c] of CARS.entries()) {
     if (only && !only.includes(c.id)) continue;
     try {
-      const cfg = { color: c.color, color2: c.color2 || '#111', tone: !!c.tone, wheel: 'mesh', wcolor: '#c9ced6', inch: 17, height: 0, ...(q.get('v') ? v[i % 4] : {}) };
+      const cfg = { color: c.color, color2: c.color2 || '#111', tone: !!c.tone, wheel: 'mesh', wcolor: '#c9ced6', inch: 17, height: 0, ...(q.get('vi') ? v[+q.get('vi')] : q.get('v') ? v[i % 4] : {}), ...(q.get('h') ? { height: +q.get('h') } : {}) };
       const url = await renderCarImage('t' + Math.random(), c.id, cfg, q.get('view') || '34');
-      const d = document.createElement('div'); d.innerHTML = `${c.id}<img src="${url}" style="width:100%;display:block">`; document.body.appendChild(d); n++;
+      const d = document.createElement('div'); d.innerHTML = `${c.id}<img src="${url}" style="width:100%;display:block" id="img${n}">`; document.body.appendChild(d); n++;
     } catch (e) { log.textContent += c.id + ': ' + e.message + ' / '; console.error(e); }
   }
   log.textContent += ` ${n} cars ${Math.round(performance.now() - t0)}ms`;

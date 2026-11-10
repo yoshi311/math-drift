@@ -290,7 +290,7 @@ export function flatSVG(carId, cfg, opts = {}) {
 
 // ===== 3D画像への差し替え =====
 // まず平面のSVGを返し、3Dの静止画ができしだい同じ場所を <img> に置きかえる
-const V3D = 'v2';
+const V3D = 'v3';
 let use3d = null, car3dMod = null;
 const queue = [];
 let running = false;
