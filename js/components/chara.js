@@ -239,12 +239,13 @@ export function charaSVG(look = {}, expr = 'normal') {
     ${H.front ? `<clipPath id="${id}hf"><path d="${H.front} ${(H.locks || []).map(lk).join(' ')}"/></clipPath>` : ''}
     <filter id="${id}s"><feFlood flood-color="${skinDD}"/><feComposite in2="SourceAlpha" operator="in"/></filter>
   </defs>
-  ${hairBack}${A.back}
+  <g transform="translate(120 66) scale(1.04 0.91) translate(-120 -56)">${hairBack}${A.back}</g>
   <path d="M${120 - neckW},176 L${120 - neckW - 1},226 Q120,238 ${120 + neckW + 1},226 L${120 + neckW},176 Z" fill="url(#${id}sk)" stroke="${INK}" stroke-width="2.2"/>
   <path d="M${120 - neckW},176 L${120 + neckW},176 L${120 + neckW},206 Q120,192 ${120 - neckW},200Z" fill="${skinDD}" opacity=".75"/>
   <path d="M${120 - neckW + 5},206 Q${120 - 6},218 ${120 - 2},230 M${120 + neckW - 5},206 Q${120 + 6},218 ${120 + 2},230" fill="none" stroke="${skinDD}" stroke-width="1.5" opacity=".9"/>
   ${O.svg}
   ${A.neck}
+  <g transform="translate(120 66) scale(1.04 0.91) translate(-120 -56)">
   <path d="M80,124 Q72,124 72,138 Q73,154 84,158Z" fill="${skin}" stroke="${INK}" stroke-width="2"/><path d="M160,124 Q168,124 168,138 Q167,154 156,158Z" fill="${skinD}" stroke="${INK}" stroke-width="2"/>
   <path d="${face}" fill="url(#${id}sk)" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
   <g clip-path="url(#${id}f)">
@@ -260,7 +261,7 @@ export function charaSVG(look = {}, expr = 'normal') {
   ${nose(L, skinD)}
   ${mouth(L, expr, skinD)}
   ${A.face}${shades}
-  ${sides}${hairFront}${A.front}${anger}${sweat}
+  ${sides}${hairFront}${A.front}${anger}${sweat}</g>
 </svg>`;
 }
 
