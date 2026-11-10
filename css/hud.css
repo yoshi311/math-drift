@@ -248,3 +248,24 @@ img.car3d{display:block;width:100%;height:auto;animation:fade .35s}
 .gv-car.is3d{cursor:grab;touch-action:none}
 .car3d-view{width:100%;display:block}
 .lane-car img.car3d{width:96px;height:44px}
+
+/* ===== キャラ立ち絵（イラスト画像・背景は切り抜き済み） ===== */
+.cimg{position:relative;display:block;width:100%;aspect-ratio:4/5;
+  -webkit-mask-image:linear-gradient(180deg,#000 68%,transparent 99%);mask-image:linear-gradient(180deg,#000 68%,transparent 99%)}
+.cimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 0;display:block;user-select:none;-webkit-user-drag:none;
+  --rim:drop-shadow(0 0 1.5px color-mix(in srgb,var(--cc) 90%,#fff)) drop-shadow(0 0 10px color-mix(in srgb,var(--cc) 55%,transparent));
+  filter:var(--rim) contrast(1.05);transition:filter .3s}
+.cimg.flip img{transform:scaleX(-1)}
+.cimg.e-smile img{filter:var(--rim) saturate(1.1) brightness(1.07)}
+.cimg.e-serious img{filter:var(--rim) contrast(1.14) saturate(.9) brightness(.9)}
+.cimg.e-angry img{filter:drop-shadow(0 0 2px #ff3b55) drop-shadow(0 0 16px rgba(255,30,60,.75)) contrast(1.15) brightness(.92);animation:cShake .35s 2}
+.cimg.e-surprise img{animation:cPop .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes cShake{25%{translate:-3px 0}50%{translate:3px 1px}75%{translate:-2px -1px}}
+@keyframes cPop{from{scale:1.08}}
+.story-chara .cimg{filter:none}
+.avatar-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%}
+.avatar-btn{padding:0;border:2px solid #2a3142;border-radius:8px;overflow:hidden;background:#0b0e16;aspect-ratio:4/5;cursor:pointer}
+.avatar-btn img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;display:block}
+.avatar-btn.on{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.6)}
+@media (max-width:700px){.avatar-grid{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){.cimg img{animation:none!important}}

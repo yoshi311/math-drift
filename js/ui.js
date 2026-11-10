@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { fmtNum, esc } from './util.js';
 import { CHARS } from '../data/story/index.js';
 import { charaSVG, meLook } from './components/chara.js';
+import { charaImgHTML, AVATARS } from './components/chara-img.js';
 
 export function topbar(title, { back = '#/home', right = '' } = {}) {
   return `<div class="topbar">
@@ -69,8 +70,12 @@ const TEAM_SIDE = new Set(['me', 'kaito', 'gen', 'mio', 'jii']);
 export function chara(key, expr = 'normal', dir) {
   const c = CHARS[key];
   if (!c || !c.look) return '';
-  return charaSVG(c.look === 'me' ? meLook(state.profile) : c.look, expr, dir ?? (TEAM_SIDE.has(key) ? 1 : -1));
+  const d = dir ?? (TEAM_SIDE.has(key) ? 1 : -1);
+  const img = charaImgHTML(key === 'me' ? myAvatar() : key, expr, d, c.color);
+  if (img) return img;
+  return charaSVG(c.look === 'me' ? meLook(state.profile) : c.look, expr, d);
 }
+export function myAvatar() { return AVATARS.includes(state.profile.avatar) ? state.profile.avatar : AVATARS[0]; }
 
 // タコメーター風のリングゲージ
 export function gauge(pct, big, small = '', color = 'var(--cyan)') {

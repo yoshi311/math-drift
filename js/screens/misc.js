@@ -1,8 +1,8 @@
 // 記録・実績 / 設定
 import { state, save, exportJSON, importJSON, resetAll, today } from '../state.js';
 import { esc, confirmBox, toast, fmtNum, modal } from '../util.js';
-import { topbar, chara } from '../ui.js';
-import { ME_STYLES, ME_COLORS } from '../components/chara.js';
+import { topbar, chara, myAvatar } from '../ui.js';
+import { AVATARS } from '../components/chara-img.js';
 import { ACHIEVEMENTS, rankInfo } from '../gamify.js';
 import { GRADES, problems } from '../../data/curriculum/index.js';
 import { go } from '../router.js';
@@ -55,8 +55,8 @@ export function settingsScreen(app) {
       <div class="me-edit">
         <div class="me-prev">${chara('me', 'smile')}</div>
         <div class="col grow">
-          <div class="set-row"><span>髪型</span>${Object.entries(ME_STYLES).map(([k, v]) => `<button class="btn btn-sm ${(state.profile.look || 'a') === k ? 'btn-primary' : ''}" data-look="${k}">${v.label}</button>`).join('')}</div>
-          <div class="set-row"><span>髪の色</span>${ME_COLORS.map(c => `<button class="hair-sw ${(state.profile.hairC || ME_COLORS[0]) === c ? 'on' : ''}" data-hair="${c}" style="--c:${c}" aria-label="髪の色"></button>`).join('')}</div>
+          <div class="set-row"><span>主人公</span></div>
+          <div class="avatar-grid">${AVATARS.map(k => `<button class="avatar-btn ${myAvatar() === k ? 'on' : ''}" data-avatar="${k}" aria-label="主人公の見た目"><img src="img/chara/${k}.webp" alt=""></button>`).join('')}</div>
         </div>
       </div></section>
     <section class="panel"><div class="panel-title">見やすさ</div>
@@ -83,8 +83,7 @@ export function settingsScreen(app) {
     let v = b.dataset.v; if (v === 'true') v = true; if (v === 'false') v = false;
     s[b.dataset.k] = v; save(); applySettings(); settingsScreen(app);
   });
-  app.querySelectorAll('[data-look]').forEach(b => b.onclick = () => { state.profile.look = b.dataset.look; save(); settingsScreen(app); });
-  app.querySelectorAll('[data-hair]').forEach(b => b.onclick = () => { state.profile.hairC = b.dataset.hair; save(); settingsScreen(app); });
+  app.querySelectorAll('[data-avatar]').forEach(b => b.onclick = () => { state.profile.avatar = b.dataset.avatar; save(); settingsScreen(app); });
   app.querySelector('#savename').onclick = () => { const v = app.querySelector('#pname').value.trim(); if (v) { state.profile.name = v; save(); toast('名前を変更しました'); } };
   app.querySelector('#export').onclick = () => {
     const blob = new Blob([exportJSON()], { type: 'application/json' });

@@ -51,3 +51,7 @@ node tools/e2e.mjs             # Edgeで全ステップを自動で解く通し�
 
 ---
 登場する車名は各メーカーの商標です。ストーリー・キャラクターはオリジナルです。
+
+## キャラクターイラスト
+
+キャラクターの立ち絵は画像生成AI（[Pollinations.ai](https://pollinations.ai)）で生成し、rembg で背景を切り抜いたオリジナルイラストです（tools/gen-chara.py・tools/cut-chara.py）。

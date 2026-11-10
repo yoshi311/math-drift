@@ -26,6 +26,8 @@ const ev = async e => (await send('Runtime.evaluate', { expression: e, awaitProm
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: +W, height: +H, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: 'http://localhost:8765/' + path });
+  // SETUP=JS式：最初に実行してから開き直す（セーブデータの用意など）
+  if (process.env.SETUP) { await sleep(1500); await ev(process.env.SETUP); await send('Page.reload', { ignoreCache: true }); }
   const t0 = Date.now();
   while (Date.now() - t0 < maxSec * 1000) { await sleep(500); try { if (await ev(cond)) break; } catch {} }
   await sleep(800);
