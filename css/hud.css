@@ -234,3 +234,11 @@ html[data-anim="off"] .hero-lines{display:none}
 .vs-half .vs-car{order:1}
 .story .story-skip{position:absolute}
 .ch-hero-chara{width:210px;margin:-24px auto -120px;position:relative;z-index:0}.ch-hero-r .car-svg{position:relative;z-index:1}
+/* VS画面：車は下、名前プレートはその上 */
+.vs-half .vs-plate{order:2;margin:0 0 -6px}
+.vs-half .vs-car{order:3;width:86%;margin:-18px 0 -14px}
+.rival .vs-car{align-self:flex-end}
+.vs-chara{width:210px}
+.vs-half .vs-plate{position:absolute;bottom:10px;left:14px;margin:0;z-index:2}
+.vs-half.rival .vs-plate{left:auto;right:14px}
+.vs-half .vs-car{margin:0 0 34px}

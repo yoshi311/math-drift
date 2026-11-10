@@ -1,21 +1,21 @@
 // ストーリー：中2・箱根・首都高編（オリジナル）
 export const CHARS = {
   yuma: { name: '神楽 ユウマ', color: '#ffb02e', role: 'HAKONE ROAD MASTERS',
-    look: { hair: 'center', hairC: '#b8752a', eye: 'sharp', eyeC: '#ffb02e', outfit: 'leather', c1: '#2a1c10', c2: '#ffb02e', patch: 'HRM', acc: ['earring'] } },
+    look: { hair: 'spiky', hairC: '#a86f30', eye: 'sharp', eyeC: '#9a6a1e', outfit: 'leather', c1: '#2a1c10', c2: '#ffb02e', patch: 'HRM', acc: ['earring'] } },
   himuro: { name: '氷室 アキ', color: '#7fd8ff', role: 'TWIN WINGS（双子の姉）',
-    look: { hair: 'bob', hairC: '#c9d6e8', eye: 'sharp', eyeC: '#4fb8ff', outfit: 'suit', c1: '#10263a', c2: '#7fd8ff', patch: 'TWIN', acc: [] } },
+    look: { hair: 'bob', hairC: '#c9d3e2', gender: 'f', eye: 'sharp', eyeC: '#3f8fd0', outfit: 'suit', c1: '#10263a', c2: '#7fd8ff', patch: 'TWIN', acc: [] } },
   natsu: { name: '氷室 ナツ', color: '#ff9fd0', role: 'TWIN WINGS（双子の妹）',
-    look: { hair: 'pony', hairC: '#c9d6e8', eye: 'normal', eyeC: '#ff7fbf', outfit: 'suit', c1: '#3a1028', c2: '#ff9fd0', patch: 'TWIN', acc: [] } },
+    look: { hair: 'pony', hairC: '#c9d3e2', gender: 'f', eye: 'normal', eyeC: '#d0609a', outfit: 'suit', c1: '#3a1028', c2: '#ff9fd0', patch: 'TWIN', acc: [] } },
   kisaragi: { name: '如月 ケイ', color: '#3d7bff', role: 'C1 NIGHT RACERS',
-    look: { hair: 'slick', hairC: '#121826', eye: 'shades', eyeC: '#3d7bff', outfit: 'coat', c1: '#0c1426', c2: '#3d7bff', acc: [] } },
+    look: { hair: 'slick', hairC: '#121826', eye: 'shades', eyeC: '#3d7bff', outfit: 'coat', c1: '#0c1426', c2: '#3d7bff', acc: ['stubble'] } },
   makabe: { name: '真壁 トオル', color: '#ff5a36', role: 'WANGAN BULLET',
-    look: { hair: 'buzz', hairC: '#2a1a14', skin: 'tan', eye: 'normal', eyeC: '#ff5a36', brow: 'thick', outfit: 'tee', c1: '#141414', c2: '#ff5a36', patch: 'BULLET', acc: ['cap'], capText: 'WB' } },
+    look: { hair: 'skin', hairC: '#2a1a14', skin: 'dark', eye: 'normal', eyeC: '#4a2a14', brow: 'thick', build: 'muscle', outfit: 'tank', c1: '#1a1a1a', c2: '#ff5a36', acc: ['cap', 'chain', 'goatee'], capText: 'WB' } },
   mido: { name: '御堂 サヤカ', color: '#ffd84d', role: '横羽クイーン',
-    look: { hair: 'long', hairC: '#e8c060', eye: 'sharp', eyeC: '#d4a017', outfit: 'business', c1: '#1a1a24', c2: '#ffd84d', acc: ['earring'] } },
+    look: { hair: 'long', hairC: '#d8b25a', gender: 'f', eye: 'sharp', eyeC: '#9a7a20', outfit: 'business', c1: '#1a1a24', c2: '#ffd84d', acc: ['earring'] } },
   joker: { name: 'ジョーカー', color: '#ff3df2', role: 'SHADOW幹部',
-    look: { hair: 'wild', hairC: '#7a2bd8', skin: 'pale', eye: 'shades', eyeC: '#ff3df2', outfit: 'coat', c1: '#140a1a', c2: '#ff3df2', acc: ['earring'] } },
+    look: { hair: 'wild', hairC: '#6a2bc8', skin: 'pale', eye: 'shades', eyeC: '#ff3df2', outfit: 'coat', c1: '#140a1a', c2: '#ff3df2', acc: ['earring', 'chain'] } },
   zero: { name: 'ゼロ', color: '#ff2340', role: 'SHADOW新総帥',
-    look: { hair: 'undercut', hairC: '#e9edf5', skin: 'pale', eye: 'sharp', eyeC: '#ff2340', outfit: 'coat', c1: '#08080c', c2: '#ff2340', acc: ['scar'] } },
+    look: { hair: 'undercut', hairC: '#e2e6ee', skin: 'pale', eye: 'sharp', eyeC: '#c81a30', outfit: 'coat', c1: '#08080c', c2: '#ff2340', acc: ['scar'] } },
 };
 
 export const SCENES = {

@@ -1,12 +1,12 @@
 <!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet"></head>
-<body style="background:#0b0d14;margin:0;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font:11px sans-serif;color:#fff">
+<body style="background:#0b0d14;margin:0;display:grid;grid-template-columns:repeat(var(--c,7),1fr);gap:4px;font:11px sans-serif;color:#fff">
 <script type="module">
 import { CHARS } from '../data/story/index.js';
 import { charaSVG, meLook } from '../js/components/chara.js';
-const ex = new URLSearchParams(location.search).get('e');
+const qs = new URLSearchParams(location.search); const ex = qs.get("e"); document.body.style.setProperty("--c", qs.get("c") || 7); const only = qs.get("k") ? qs.get("k").split(",") : null;
 const exprs = ex ? [ex] : ['normal'];
 for (const [k, c] of Object.entries(CHARS)) {
-  if (!c.look) continue;
+  if (!c.look || (only && !only.includes(k))) continue;
   for (const e of exprs) {
     const d = document.createElement('div');
     d.style.cssText = 'background:#1a2030;text-align:center';
