@@ -88,6 +88,11 @@ export function chapterScreen(app, { id }) {
       <div class="bc-title">VS ${esc(rch.name)}<small>章末テスト ${ch.battle.length}問 ／ 7割以上で勝利</small></div>
       <div class="bc-state">${p.battle ? `<span class="chip g">WIN　ベスト ${state.battles[id].best}%</span>` : '<span class="chip r">挑戦できる</span>'}</div>
     </a>
+    ${p.battle ? `<a class="battle-card hard ${state.battles[id].hard ? 'beat' : ''}" href="#/battle/${ch.id}?hard=1">
+      <div class="en bc-label">HARD MODE</div>
+      <div class="bc-title">再戦 VS ${esc(rch.name)}<small>8割以上＋制限タイム ／ 勝つとSR確率の高い部品箱</small></div>
+      <div class="bc-state">${state.battles[id].hard ? '<span class="chip g">HARD WIN</span>' : '<span class="chip y">🔥 挑戦できる</span>'}</div>
+    </a>` : ''}
   </div>`;
   app.querySelectorAll('[data-story]').forEach(b => b.onclick = () => playStory(b.dataset.story));
   if (!state.seenStory[id + '-intro'] && hasScene(id + '-intro')) setTimeout(() => playStory(id + '-intro'), 250);

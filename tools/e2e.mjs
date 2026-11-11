@@ -179,7 +179,7 @@ async function runQuizToEnd(wrongIdx = new Set(), label = '') {
   assert(st4.garage.ownedParts.includes('wing-3') && st4.garage.cars.ae86?.wing === 3, 'GT wing bought & equipped');
 
   // そのほかの画面
-  for (const [h, n] of [['#/map', 'map'], ['#/chapter/g1-c5', 'chapter5'], ['#/notes', 'notes'], ['#/records', 'records'], ['#/settings', 'settings'], ['#/dealer', 'dealer'], ['#/home', 'home2']]) {
+  for (const [h, n] of [['#/map', 'map'], ['#/chapter/g1-c5', 'chapter5'], ['#/notes', 'notes'], ['#/records', 'records'], ['#/settings', 'settings'], ['#/dealer', 'dealer'], ['#/attack', 'attack'], ['#/maint', 'maint'], ['#/home', 'home2']]) {
     await ev(`location.hash='${h}'`); await sleep(700);
     if (await exists('.story')) { await click('.story-skip'); await sleep(400); }
     await shot('e2e-' + n);

@@ -60,6 +60,7 @@ const TASK_POOL = [
   { id: 'brief2', label: 'ブリーフィング（解説）を2つ読む', ev: 'brief', n: 2, gp: 40 },
   { id: 'battle1', label: 'ライバルバトルに挑戦する', ev: 'battle', n: 1, gp: 100 },
   { id: 'replay1', label: 'クリア済みステップを再走する', ev: 'replay', n: 1, gp: 60 },
+  { id: 'attack1', label: 'タイムアタックを1本走る', ev: 'attack', n: 1, gp: 60, needAttack: true },
   { id: 'maint1', label: '今日のメンテを完了する', ev: 'maint', n: 1, gp: 80, needDue: true },
 ];
 export const DAILY_BONUS = 150;
@@ -71,7 +72,8 @@ export function ensureDaily() {
   const hasWrong = Object.values(state.history).some(h => h.status === 'wrong');
   const base = shuffle(TASK_POOL.filter(x => x.base), rnd)[0];
   const hasDue = Object.values(state.history).some(h => h.due && h.due <= t);
-  const pool = TASK_POOL.filter(x => !x.base && !x.needDue && (!x.needWrong || hasWrong) && (x.ev !== 'replay' || Object.keys(state.progress).length));
+  const canAttack = Object.values(state.progress).filter(p => p.cleared).length >= 2;
+  const pool = TASK_POOL.filter(x => !x.base && !x.needDue && (!x.needAttack || canAttack) && (!x.needWrong || hasWrong) && (x.ev !== 'replay' || Object.keys(state.progress).length));
   const others = hasDue ? [TASK_POOL.find(x => x.needDue), shuffle(pool, rnd)[0]] : shuffle(pool, rnd).slice(0, 2);
   state.daily = { date: t, tasks: [base, ...others].map(x => ({ id: x.id, label: x.label, ev: x.ev, n: x.n, gp: x.gp, done: false })), counts: {}, bonusClaimed: false };
   save();
@@ -151,6 +153,9 @@ export const ACHIEVEMENTS = [
   { id: 'mt7', name: '整備の鬼', desc: '今日のメンテを7日続けて完了', test: s => (s.maint?.streak || 0) >= 7 },
   { id: 'gh10', name: 'ゴーストバスター', desc: '自分のゴーストを10回抜く', test: s => (s.stats.ghost || 0) >= 10 },
   { id: 'cb10', name: 'フルブースト', desc: '1回の走行で10コンボ', test: s => (s.stats.combo10 || 0) >= 1 },
+  { id: 'ta1', name: 'タイムアタッカー', desc: 'タイムアタックで今週のP1', test: s => (s.stats.attackTop || 0) >= 1 },
+  { id: 'hard1', name: 'ハードモード制覇', desc: 'ライバルにハードモードで勝つ', test: s => Object.values(s.battles).some(b => b.hard) },
+  { id: 'drop10', name: 'パーツハンター', desc: '部品箱でパーツを10個手に入れる', test: s => (s.stats.drops || 0) >= 10 },
   { id: 'cust1', name: 'はじめてのカスタム', desc: 'パーツを買う', test: s => s.stats.customs >= 1 },
   { id: 'cars5', name: 'コレクター', desc: '車を5台持つ', test: s => s.garage.ownedCars.length >= 5 },
   { id: 'rankA', name: 'Aランク到達', desc: 'ドライバーランクA', test: s => s.xp >= 2000 },

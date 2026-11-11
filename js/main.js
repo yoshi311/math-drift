@@ -5,6 +5,7 @@ import { titleScreen, homeScreen } from './screens/home.js';
 import { mapScreen, chapterScreen } from './screens/map.js';
 import { stepScreen, battleScreen } from './screens/step.js';
 import { pitScreen, pitSingle, notesScreen, maintScreen } from './screens/pit.js';
+import { attackScreen } from './screens/attack.js';
 import { garageScreen, dealerScreen } from './screens/garage.js';
 import { recordsScreen, settingsScreen, applySettings } from './screens/misc.js';
 
@@ -20,6 +21,7 @@ route('/battle/:id', battleScreen);
 route('/pit', pitScreen);
 route('/pit/p/:pid', pitSingle);
 route('/maint', maintScreen);
+route('/attack', attackScreen);
 route('/notes', notesScreen);
 route('/garage', garageScreen);
 route('/dealer', dealerScreen);

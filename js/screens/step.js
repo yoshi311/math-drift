@@ -155,7 +155,10 @@ export function battleScreen(app, { id }) {
   if (!ch) { go('/map', true); return; }
   const rc = carById(ch.rival.car), rch = CHARS[ch.rival.char];
   const my = carById(state.garage.current);
+  const hard = new URLSearchParams(location.hash.split('?')[1] || '').get('hard') === '1' && !!state.battles[id]?.cleared;
   const perks = battlePerks(carStats(my, getConfig(state, my.id)));
+  if (hard) perks.saves = 0;
+  const NEED = hard ? .8 : .7, LIMIT = hard ? ch.battle.length * 30 : null;
   let cleanup = null;
 
   app.innerHTML = `${topbar(`RIVAL BATTLE　STAGE ${ch.no}`, { back: `#/chapter/${ch.id}` })}
@@ -171,7 +174,8 @@ export function battleScreen(app, { id }) {
     </div>
     <div class="panel center">
       <h2>${esc(ch.stage)}</h2>
-      <p>章末テスト <b>${ch.battle.length}問</b>。正解するとキミの車が前に出る！<br><b class="hl">7割以上の正解で勝利</b>。ヒントは使えるけど、解説は答えたあとに出るよ。</p>
+      ${hard ? `<div class="en hard-badge">HARD MODE</div><p>章末テスト <b>${ch.battle.length}問</b>。<b class="hl">8割以上の正解</b>、しかも <b class="hl">LAP ${fmtLap(LIMIT)} 以内</b>で勝利。GRIPのカバーはなし！</p>` :
+      `<p>章末テスト <b>${ch.battle.length}問</b>。正解するとキミの車が前に出る！<br><b class="hl">7割以上の正解で勝利</b>。ヒントは使えるけど、解説は答えたあとに出るよ。</p>`}
       <div class="perk-row"><span class="chip r">POWER：ライバルを引き離す</span><span class="chip c">GRIP：ミスを${perks.saves}回カバー</span><span class="chip y">AERO：スタートコンボ ${perks.startCombo}</span></div>
       <p class="muted small">性能はガレージのエンジン・タイヤ・エアロで上がる</p>
       <button class="btn btn-red btn-lg" id="go">BATTLE START ▶</button>
@@ -214,11 +218,13 @@ export function battleScreen(app, { id }) {
     const ok = res.filter(r => r.ok).length, total = res.length;
     const pct = Math.round(ok / total * 100);
     const saved = Math.min(perks.saves, total - ok);
-    const win = (ok + saved) / total >= .7;
+    const win = (ok + saved) / total >= NEED && (!LIMIT || (dr && dr.lap <= LIMIT));
+    const firstHard = hard && win && !old.hard;
     const old = state.battles[id] || { cleared: false, best: 0 };
     const firstWin = win && !old.cleared;
     const lapInfo = lapRecord(old, dr, win);
-    state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...lapInfo.save };
+    state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...lapInfo.save, ...(firstHard ? { hard: true } : {}) };
+    if (firstHard) addGP(300, 'ハードモード制覇', true);
     if (lapInfo.beat) state.stats.ghost = (state.stats.ghost || 0) + 1;
     let unlocked = null;
     if (firstWin) {
@@ -236,7 +242,8 @@ export function battleScreen(app, { id }) {
         <div class="en rh-pos">${win ? 'P1' : 'P2'}</div>
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
-        <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : `（7割で勝利：あと${Math.ceil(total * .7) - ok - saved}問）`}</div>
+        <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : LIMIT && (ok + saved) / total >= NEED ? `（タイムオーバー：${fmtLap(LIMIT)} 以内で勝利）` : `（${hard ? 8 : 7}割で勝利：あと${Math.ceil(total * NEED) - ok - saved}問）`}</div>
+        ${firstHard ? '<div class="rh-gp en">HARD CLEAR +300 GP</div>' : ''}
         ${lapHTML(lapInfo, dr)}
         ${firstWin ? `<div class="rh-gp en">+200 GP</div>` : ''}
         ${unlocked ? `<div class="unlock"><div class="en">NEW CAR</div>${carSVG(unlocked.id, {})}<b>${esc(unlocked.name)}</b> がガレージに入った！</div>` : ''}
@@ -248,9 +255,12 @@ export function battleScreen(app, { id }) {
         <a class="btn" href="#/chapter/${ch.id}">ステージに戻る</a>
         <a class="btn" href="#/pit">ピットインで復習</a>
         <button class="btn btn-red btn-lg" data-act="again">もう一度バトル</button>
+        ${state.battles[id].cleared && !hard ? `<button class="btn btn-yellow" data-act="hard">🔥 ハードモードで再戦</button>` : ''}
       </div>
     </div>`;
     app.querySelector('[data-act=again]').onclick = () => battleScreen(app, { id });
+    const hb = app.querySelector('[data-act=hard]'); if (hb) hb.onclick = () => { location.hash = `#/battle/${id}?hard=1`; };
+    if (firstHard) setTimeout(() => openDrop('great'), 900);
     if (firstWin) setTimeout(async () => { await openDrop('great'); if (hasScene(id + '-outro')) playStory(id + '-outro'); }, 900);
   }
   return () => cleanup && cleanup();

@@ -339,3 +339,13 @@ img.car3d{display:block;width:100%;height:auto;animation:fade .35s}
 .perks{margin-top:8px;line-height:1.6;color:var(--muted)}
 .perks b{color:var(--text,#fff)}
 .perk-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}
+/* ===== タイムアタック・ハード ===== */
+.attack-card{display:block;color:inherit;text-decoration:none;border-left:4px solid var(--cyan)}
+.att-pos{font-size:3em;font-weight:900;font-style:italic;color:var(--cyan);text-shadow:0 0 14px rgba(0,229,255,.5);min-width:2.2em}
+.att-pos.sm{font-size:2em;min-width:2em}
+.board{display:flex;flex-direction:column;gap:4px}
+.bd-row{display:grid;grid-template-columns:3em 1fr auto;gap:10px;padding:6px 12px;background:#0e131d;transform:skewX(-8deg)}
+.bd-row>*{transform:skewX(8deg)}
+.bd-row.me{background:linear-gradient(90deg,rgba(0,229,255,.25),#0e131d);box-shadow:inset 3px 0 var(--cyan)}
+.battle-card.hard{margin-top:10px;border-color:rgba(255,170,0,.5);background:linear-gradient(90deg,#2a1606,#0e121b)}
+.hard-badge{display:inline-block;padding:2px 14px;background:#ff7a00;color:#000;font-weight:900;font-style:italic;letter-spacing:.15em;transform:skewX(-12deg);margin-bottom:6px}

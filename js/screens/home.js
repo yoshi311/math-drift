@@ -8,7 +8,10 @@ import { carById } from '../../data/cars.js';
 import { rankInfo, checkLogin, claimLogin, ensureDaily, LOGIN_REWARDS, DAILY_BONUS } from '../gamify.js';
 import { GRADES, steps } from '../../data/curriculum/index.js';
 import { playStory } from './story.js';
+import { CHARS } from '../../data/story/index.js';
 import { condition, doneToday } from '../maint.js';
+import { weekRec, attackSet, position } from './attack.js';
+import { fmtLap } from '../components/drive.js';
 
 export function titleScreen(app) {
   app.innerHTML = `<div class="title-screen">
@@ -49,6 +52,7 @@ export function homeScreen(app) {
   const cleared = Object.values(state.progress).filter(p => p.cleared).length;
   const totalSteps = Object.keys(steps).length;
   const cond = condition();
+  const atk = weekRec(), atkSet = attackSet(), atkPos = position(atk.best);
 
   app.innerHTML = `${topbar('<span class="en logo-mini">MATH<b>DRIFT</b></span>', { back: '' })}
   <div class="page home">
@@ -95,6 +99,13 @@ export function homeScreen(app) {
       <div class="row"><span class="grow">${cond.n ? `🔧 <b>${esc(cond.label)}</b>　点検が必要な問題 <b class="en">${cond.n}</b>問` : '✔ 点検が必要な問題はなし。絶好調！'}
         ${state.maint.streak && (doneToday() || state.maint.last) ? `<small class="muted">　メンテ連続 ${state.maint.streak}日</small>` : ''}</span>
         ${cond.n ? `<span class="btn btn-red btn-sm">今日のメンテ ▶</span>` : ''}</div>
+    </a>
+
+    <a class="panel attack-card" href="#/attack">
+      <div class="panel-title">WEEKLY TIME ATTACK　今週のタイムアタック</div>
+      ${atkSet.need ? '<div class="muted">ステップをもう少しクリアすると挑戦できる</div>' : `<div class="row"><b class="en att-pos sm">${atk.best != null ? 'P' + atkPos.pos : '—'}</b>
+        <span class="grow">${atk.best != null ? `ベスト <b class="en">${fmtLap(atk.best)}</b>` : '今週はまだ走っていない'}${atkPos.next ? `<br><small class="muted">次は ${esc(CHARS[atkPos.next.char].name)}（${fmtLap(atkPos.next.t)}）</small>` : '<br><small class="hl">今週のトップ！</small>'}</span>
+        <span class="btn btn-primary btn-sm">走る ▶</span></div>`}
     </a>
 
     <section class="panel daily">
