@@ -46,9 +46,9 @@ function buildFromModel(id, cfg, mats, root, bodyG) {
   m.traverse(o => {
     if (!o.isMesh) return;
     const n = o.material?.name || '';
-    if (M.paint.includes(n)) o.material = paintF;
+    if (M.paint.includes(n)) { o.material = paintF; o.userData.paint = true; }
     else if (M.tone.includes(n)) o.material = toneF;
-    else if (M.glass.includes(n)) { const g = o.material.clone(); g.transparent = true; g.opacity = tintOp; g.color = new THREE.Color('#0c1218'); g.userData.own = true; o.material = g; }
+    else if (M.glass.includes(n)) { o.userData.glass = true; const g = o.material.clone(); g.transparent = true; g.opacity = tintOp; g.color = new THREE.Color('#0c1218'); g.userData.own = true; o.material = g; }
   });
   const hy = bodyG.position.y; bodyG.position.y = 0;
   bodyG.add(m); root.add(bodyG); root.updateMatrixWorld(true);
@@ -374,27 +374,38 @@ export function buildCar(carId, cfg) {
   if (cfg.bonnet && S.hood) {
     const carbon = new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .3, metalness: .35, side: THREE.DoubleSide });
     if (useModel) {
-      // glb：ボンネットの表面を格子状に上から測り、その曲面に沿ったカーボンの板を作る
-      const meshes = []; bodyG.traverse(o => { if (o.isMesh && o.visible) meshes.push(o); }); root.updateMatrixWorld(true);
+      // glb：ボンネットの面そのものをカーボンに塗り替える（浮かない）
+      root.updateMatrixWorld(true);
+      const meshes = []; bodyG.traverse(o => { if (o.isMesh && o.visible) meshes.push(o); });
       const rc = new THREE.Raycaster();
-      const down = (x, z) => { rc.set(new THREE.Vector3(x * MM, 3, z * MM), new THREE.Vector3(0, -1, 0)); const h = rc.intersectObjects(meshes, false)[0]; return h ? (h.point.y - bodyG.position.y) / MM : null; };
-      const wf = wheelCenters ? Math.max(...Object.values(wheelCenters).map(c => c.x)) / MM : len - S.fo;
-      const x1 = wf - 480, x2 = Math.min(len - 110, wf + 640), NX = 16, NZ = 12;
-      const zmax = Math.min(640, B.hw0 * .8), yc = down((x1 + x2) / 2, 0) || 800;
-      const pos = [], uv = [], idx = [], ok = [];
-      for (let i = 0; i <= NX; i++) for (let j = 0; j <= NZ; j++) {
-        const x = x1 + (x2 - x1) * i / NX, z = -zmax + 2 * zmax * j / NZ, y = down(x, z);
-        const good = y != null && y > yc - 260; ok.push(good);
-        pos.push(x * MM, ((good ? y : yc) + 5) * MM, z * MM); uv.push(i / NX * 3, j / NZ * 2);
-      }
-      for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
-        const a0 = i * (NZ + 1) + j, a1 = a0 + 1, b0 = a0 + NZ + 1, b1 = b0 + 1;
-        if (ok[a0] && ok[a1] && ok[b0] && ok[b1]) idx.push(a0, b0, a1, a1, b0, b1);
-      }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-      const t = carbon.map.clone(); t.needsUpdate = true; t.repeat.set(4, 4); carbon.map = t;
-      bodyG.add(new THREE.Mesh(g, carbon));
-    } else {
+      const down = x => { rc.set(new THREE.Vector3(x * MM, 3, 0), new THREE.Vector3(0, -1, 0)); const h = rc.intersectObjects(meshes, false)[0]; return h ? (h.point.y - bodyG.position.y) / MM : null; };
+      // ボンネットの後端＝フロントガラスの下端（ガラスの一番前）
+      // （ヘッドライトのレンズもガラス材質のことがあるので、高さ0.85m以上の頂点だけで判定）
+      let gmax = -Infinity; const tv = new THREE.Vector3();
+      bodyG.traverse(o => { if (!o.isMesh || !o.userData.glass) return; const P = o.geometry.attributes.position; for (let v = 0; v < P.count; v++) { tv.fromBufferAttribute(P, v).applyMatrix4(o.matrixWorld); if (tv.y - bodyG.position.y > .85 && tv.x > gmax) gmax = tv.x; } });
+      const x1 = (isFinite(gmax) ? gmax / MM : len * .62) + 110, x2 = len;
+      const hx = [], hy = []; for (let i = 0; i <= 10; i++) { const x = x1 + (x2 - x1) * i / 10, y = down(x); if (y != null) { hx.push(x); hy.push(y); } }
+      const hood = x => { let k = 0; while (k < hx.length - 2 && hx[k + 1] < x) k++; const t = (x - hx[k]) / ((hx[k + 1] - hx[k]) || 1); return hy[k] + (hy[k + 1] - hy[k]) * Math.max(0, Math.min(1, t)); };
+      const zmax = B.hw0 * .8, inv = new THREE.Matrix4(), va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3(), n = new THREE.Vector3();
+      bodyG.traverse(o => {
+        if (!o.isMesh || !o.userData.paint || hx.length < 3) return;
+        const geo = o.geometry.clone(); const P = geo.attributes.position, I = geo.index ? geo.index.array : [...Array(P.count).keys()];
+        const W = o.matrixWorld, keep = [], carb = [];
+        const uv = new Float32Array(P.count * 2);
+        for (let v = 0; v < P.count; v++) { va.fromBufferAttribute(P, v).applyMatrix4(W); uv[v * 2] = va.x * 2.2; uv[v * 2 + 1] = va.z * 2.2; }
+        for (let t = 0; t < I.length; t += 3) {
+          va.fromBufferAttribute(P, I[t]).applyMatrix4(W); vb.fromBufferAttribute(P, I[t + 1]).applyMatrix4(W); vc.fromBufferAttribute(P, I[t + 2]).applyMatrix4(W);
+          const cx = (va.x + vb.x + vc.x) / 3 / MM, cy = ((va.y + vb.y + vc.y) / 3 - bodyG.position.y) / MM, cz = (va.z + vb.z + vc.z) / 3 / MM;
+          n.subVectors(vb, va).cross(vc.clone().sub(va)).normalize();
+          const on = cx > x1 && cx < x2 && Math.abs(cz) < zmax && Math.abs(n.y) > .7 && cy > hood(cx) - 45;
+          (on ? carb : keep).push(I[t], I[t + 1], I[t + 2]);
+        }
+        if (!carb.length) return;
+        geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+        geo.setIndex([...keep, ...carb]); geo.clearGroups(); geo.addGroup(0, keep.length, 0); geo.addGroup(keep.length, carb.length, 1);
+        o.geometry = geo; o.material = [o.material, carbon]; o.userData.shared = false;
+      });
+        } else {
       const [x1, y1, x2, y2] = S.hood; const ang = Math.atan2(y2 - y1, x2 - x1), L = Math.hypot(x2 - x1, y2 - y1);
       const hw = B.hwAt((x1 + x2) / 2);
       bodyG.add(box(L * MM * .96, .012, hw * 1.55 * MM, carbon, (x1 + x2) / 2 * MM, ((y1 + y2) / 2 + 4) * MM, 0, ang));
