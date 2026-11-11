@@ -13,8 +13,13 @@ import { AE86, buildAE86Body, addAE86Parts, hwAt as ae86hw, topAt as ae86top } f
 // ===== プロ製の3Dモデル（glTF）：あれば最優先で使う =====
 // AE86：「Toyota AE86 Sprinter Trueno Zenki」Martin Trafas 作（CC BY 4.0）を軽量化（models/CREDITS.md）
 // 元データは cm 単位・前が+z。読み込み後に m 単位・前が+x・後端 x=0 に合わせる
+// paint/tone/glass：ボディ色・ツートン下側・ガラスのマテリアル名、wheel：ホイールのノード名（FL/FR/RL/RR）
 const MODELS = {
-  ae86: { url: '../../models/ae86.glb', scale: .01, zMin: -212.42, yMin: .57, popup: [70, 181, 1.17] },
+  ae86: { url: '../../models/ae86.glb', scale: .01, zMin: -212.42, yMin: .57, popup: [70, 181, 1.17],
+    paint: ['Primary'], tone: ['Secondary'], glass: ['Windows'], wheel: /^(FL|FR|RL|RR)_(Wheel|Caliper)/ },
+  // S13：「1992 Nissan Silvia S13」bagged_ls 作（CC BY 4.0）
+  s13: { url: '../../models/s13.glb', scale: 1, zMin: -2.2943, yMin: -.0024,
+    paint: ['CarPaint'], tone: ['CarPaint2'], glass: ['Windows'], wheel: /^(FL|FR|RL|RR)_\d+$/ },
 };
 const MODEL_SCENE = new Map(), MODEL_LOAD = new Map();
 export function hasModel(id) { return !!MODELS[id]; }
@@ -38,9 +43,9 @@ function buildFromModel(id, cfg, mats, root, bodyG) {
   m.traverse(o => {
     if (!o.isMesh) return;
     const n = o.material?.name || '';
-    if (n === 'Primary') o.material = paintF;
-    else if (n === 'Secondary') o.material = toneF;
-    else if (n === 'Windows') { const g = o.material.clone(); g.transparent = true; g.opacity = tintOp; g.color = new THREE.Color('#0c1218'); g.userData.own = true; o.material = g; }
+    if (M.paint.includes(n)) o.material = paintF;
+    else if (M.tone.includes(n)) o.material = toneF;
+    else if (M.glass.includes(n)) { const g = o.material.clone(); g.transparent = true; g.opacity = tintOp; g.color = new THREE.Color('#0c1218'); g.userData.own = true; o.material = g; }
   });
   const hy = bodyG.position.y; bodyG.position.y = 0;
   bodyG.add(m); root.add(bodyG); root.updateMatrixWorld(true);
@@ -53,12 +58,12 @@ function buildFromModel(id, cfg, mats, root, bodyG) {
   }
   // ホイール（FL/FR/RL/RR）はボディから外して地面基準に置く
   const wheels = [];
-  m.traverse(o => { if (/^(FL|FR|RL|RR)_(Wheel|Caliper)/.test(o.name) && !/^(FL|FR|RL|RR)_(Wheel|Caliper)/.test(o.parent?.name || '')) wheels.push(o); });
+  m.traverse(o => { if (M.wheel.test(o.name) && !M.wheel.test(o.parent?.name || '')) wheels.push(o); });
+  const boxes = {};
+  for (const w of wheels) { const k = w.name.slice(0, 2); (boxes[k] ||= new THREE.Box3()).union(new THREE.Box3().setFromObject(w)); }
   const centers = {};
+  for (const [k, b] of Object.entries(boxes)) { const c = b.getCenter(new THREE.Vector3()); c.y = (b.max.y - b.min.y) / 2; centers[k] = c; }
   for (const w of wheels) {
-    const key = w.name.slice(0, 2);
-    const b = new THREE.Box3().setFromObject(w);
-    if (/Wheel/.test(w.name) && b.max.y - b.min.y > .3) centers[key] = b.getCenter(new THREE.Vector3());
     root.attach(w);
     if (cfg.wheel && cfg.wheel !== 'stock') w.visible = false;
   }
@@ -334,10 +339,11 @@ export function buildCar(carId, cfg) {
     const lx = Math.min(140, b.x1 - b.x0 + 30), cx = rear ? b.x0 + lx / 2 - 10 : b.x1 - lx / 2 + 10;
     for (const s of [-1, 1]) bodyG.add(box(lx * MM, (y1 - y0) * MM, hw * .42 * MM, mat, cx * MM, (y0 + y1) / 2 * MM, s * hw * .6 * MM));
   };
-  if (!D && S.head) lightBox(S.head, S.popup ? mats.amber : mats.head, false);
-  if (!D && S.tail) lightBox(S.tail, mats.tail, true);
+  const own = D || useModel; // 専用モデル・glbは自前のライト・グリル・ミラーを持つ
+  if (!own && S.head) lightBox(S.head, S.popup ? mats.amber : mats.head, false);
+  if (!own && S.tail) lightBox(S.tail, mats.tail, true);
   // グリル（前面下部の開口）とナンバープレート
-  if (!D) {
+  if (!own) {
     const fx = len - 8, gy = S.rocker + 200, gh = Math.min(220, (B.topAt(len - 60) - S.rocker) * .42);
     const hw = B.hwAt(len - 60);
     bodyG.add(box(.06, gh * MM, hw * 1.05 * MM, mats.grille, (fx - 40) * MM, gy * MM, 0));
@@ -348,9 +354,9 @@ export function buildCar(carId, cfg) {
     bodyG.add(box(.05, .09, rhw * 1.3 * MM, mats.grille, 18 * MM, (S.rocker + 110) * MM, 0));
   }
   // ミラー
-  if (!D && S.mirror) { const [mx, my] = S.mirror; const hw = B.hwAt(mx); for (const s of [-1, 1]) { bodyG.add(box(.15, .095, .05, mats.paint, mx * MM, (S.belt + 75) * MM, s * (hw * .93 + 70) * MM)); bodyG.add(box(.05, .035, .09, mats.trim, (mx + 20) * MM, (S.belt + 30) * MM, s * (hw * .93 + 25) * MM)); } }
+  if (!own && S.mirror) { const [mx, my] = S.mirror; const hw = B.hwAt(mx); for (const s of [-1, 1]) { bodyG.add(box(.15, .095, .05, mats.paint, mx * MM, (S.belt + 75) * MM, s * (hw * .93 + 70) * MM)); bodyG.add(box(.05, .035, .09, mats.trim, (mx + 20) * MM, (S.belt + 30) * MM, s * (hw * .93 + 25) * MM)); } }
   // メッキバンパー
-  if (S.chrome) { bodyG.add(box(.05, .07, B.hwAt(len - 40) * 1.7 * MM, mats.chrome, (len - 4) * MM, (S.rocker + 220) * MM, 0)); bodyG.add(box(.05, .07, B.hwAt(40) * 1.7 * MM, mats.chrome, 2 * MM, (S.rocker + 260) * MM, 0)); }
+  if (!own && S.chrome) { bodyG.add(box(.05, .07, B.hwAt(len - 40) * 1.7 * MM, mats.chrome, (len - 4) * MM, (S.rocker + 220) * MM, 0)); bodyG.add(box(.05, .07, B.hwAt(40) * 1.7 * MM, mats.chrome, 2 * MM, (S.rocker + 260) * MM, 0)); }
   // オープンカーのフロントガラスとシート
   if (S.open && S.shield) {
     const [a, b] = [S.shield[0], S.shield[1]]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]), ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
@@ -360,7 +366,7 @@ export function buildCar(carId, cfg) {
     for (const sz of [-1, 1]) (S.seats || []).slice(0, 1).forEach(sx => { bodyG.add(box(.12, .52, .46, mats.trim, (sx - 60) * MM, (S.belt + 120) * MM, sz * .3)); bodyG.add(box(.5, .08, .46, mats.trim, (sx + 150) * MM, (S.belt - 20) * MM, sz * .3)); });
   }
   // スクープ
-  if (S.scoop) { const b = bboxOf(S.scoop); bodyG.add(box((b.x1 - b.x0) * MM, (b.y1 - b.y0) * MM, .42, cfg.bonnet ? new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .35, metalness: .3 }) : mats.paint, (b.x0 + b.x1) / 2 * MM, (b.y0 + b.y1) / 2 * MM, 0)); }
+  if (!own && S.scoop) { const b = bboxOf(S.scoop); bodyG.add(box((b.x1 - b.x0) * MM, (b.y1 - b.y0) * MM, .42, cfg.bonnet ? new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .35, metalness: .3 }) : mats.paint, (b.x0 + b.x1) / 2 * MM, (b.y0 + b.y1) / 2 * MM, 0)); }
   // カーボンボンネット
   if (cfg.bonnet && S.hood) {
     const [x1, y1, x2, y2] = S.hood; const ang = Math.atan2(y2 - y1, x2 - x1), L = Math.hypot(x2 - x1, y2 - y1);
@@ -377,7 +383,18 @@ export function buildCar(carId, cfg) {
   if (wt) bodyG.add(wing(wt, S, B, mats, mats.paint));
   // ステッカー
   const d0 = (S.doors || [len / 2 + 400])[0], d1 = (S.doors && S.doors[1]) || d0 - 1000;
-  const dx = (d0 + d1) / 2, dy = (S.belt + S.rocker) / 2, dhw = B.hwAt(dx) + 4;
+  // glbの車は、表面に光線を当てて実際の半幅（mm）を測る（ステッカーを曲面に沿わせる）
+  const surf = (x, y, half = 0) => {
+    if (!useModel) return B.hwAt(x) + 4;
+    const rc = new THREE.Raycaster(); let best = 0; root.updateMatrixWorld(true);
+    const hits = []; bodyG.traverse(o => { if (o.isMesh && o.visible) hits.push(o); });
+    for (const xx of half ? [x - half, x, x + half] : [x]) {
+      rc.set(new THREE.Vector3(xx * MM, y * MM + bodyG.position.y, 3), new THREE.Vector3(0, 0, -1));
+      const h = rc.intersectObjects(hits, false)[0]; if (h) best = Math.max(best, h.point.z / MM);
+    }
+    return (best || B.hwAt(x)) + 6;
+  };
+  const dx = (d0 + d1) / 2, dy = (S.belt + S.rocker) / 2, dhw = surf(dx, dy, 300);
   const lum = new THREE.Color(col).getHSL({}).l;
   const ink = lum > .55 ? '#111' : '#fff';
   if (cfg.livery === 'number') {
@@ -390,7 +407,8 @@ export function buildCar(carId, cfg) {
     for (const s of [-1, 1]) { bodyG.add(box((len - 1100) * MM, .045, .004, new THREE.MeshPhysicalMaterial({ color: ink, clearcoat: 1, roughness: .35 }), len / 2 * MM, (S.rocker + 230) * MM, s * (B.hw0 + 6) * MM)); bodyG.add(box((len - 1100) * MM, .02, .004, new THREE.MeshPhysicalMaterial({ color: ink, clearcoat: 1 }), len / 2 * MM, (S.rocker + 175) * MM, s * (B.hw0 + 6) * MM)); }
   } else if (cfg.livery === 'fire') {
     const t = canvasTex(512, 160, (g, w, h) => { const gr = g.createLinearGradient(w, 0, 0, 0); gr.addColorStop(0, '#ffd400'); gr.addColorStop(.5, '#ff7a00'); gr.addColorStop(1, '#ff2d55'); g.fillStyle = gr; g.beginPath(); g.moveTo(w, 10); for (let i = 0; i < 6; i++) { const x = w - 80 - i * 70; g.quadraticCurveTo(x + 40, 20 + (i % 2) * 40, x, 60 + (i % 2) * 30); g.quadraticCurveTo(x - 30, 90, x - 50, 80 + (i % 2) * 20); } g.lineTo(w * .1, 120); g.quadraticCurveTo(w * .4, 160, w, 150); g.closePath(); g.fill(); });
-    const fx = len - S.fo - 300, fhw = B.hwAt(fx) + 4;
+    const wfx = wheelCenters ? Math.max(...Object.values(wheelCenters).map(c => c.x)) / MM : len - S.fo;
+    const fx = wfx - S.tire / 2 - 80 - 750, fhw = surf(fx, S.rocker + 320, 650); // 前輪の後ろから後方へ
     for (const s of [-1, 1]) bodyG.add(decal(t, 1.5, .47, fx * MM, (S.rocker + 320) * MM, s * fhw * MM, s));
   }
   root.add(bodyG);
