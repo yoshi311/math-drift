@@ -55,3 +55,7 @@ node tools/e2e.mjs             # Edgeで全ステップを自動で解く通し�
 ## キャラクターイラスト
 
 キャラクターの立ち絵は画像生成AI（[Pollinations.ai](https://pollinations.ai)）で生成し、rembg で背景を切り抜いたオリジナルイラストです（tools/gen-chara.py・tools/cut-chara.py）。
+
+## 3Dモデル
+
+AE86の3Dモデルは、Martin Trafas 氏の「Toyota AE86 Sprinter Trueno Zenki」（[Sketchfab](https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9)、[CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)）を軽量化・改変して使用しています。詳しくは models/CREDITS.md。

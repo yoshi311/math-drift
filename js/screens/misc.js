@@ -73,6 +73,10 @@ export function settingsScreen(app) {
         <button class="btn btn-red" id="reset">データをすべて消す</button>
       </div>
     </section>
+    <section class="panel"><div class="panel-title">CREDITS</div>
+      <p class="muted small">AE86の3Dモデル：「Toyota AE86 Sprinter Trueno Zenki」by Martin Trafas（<a href="https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9" target="_blank" rel="noopener">Sketchfab</a>）／<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>（軽量化・色変更などの改変あり）<br>
+      3D描画：three.js（MIT）／キャラクターイラスト：画像生成AI（Pollinations.ai）で作成したオリジナル</p>
+    </section>
     <section class="panel"><div class="panel-title">ABOUT</div>
       <p class="small muted">MATH DRIFT ― 中学数学（東京書籍『新しい数学』準拠）学習ゲーム。<br>
       iPadのSafariで「共有 → ホーム画面に追加」すると、アプリのように全画面で使えます。<br>

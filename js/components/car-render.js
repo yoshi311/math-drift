@@ -50,6 +50,7 @@ function wheel(cx, cy, R, rr, design, color, uid) {
   const dark = '#1c1e22', lip = shade(color, .35), deep = shade(color, -.35);
   let spokes = '';
   const P = (a, r) => `${f1(Math.cos(a) * r)},${f1(Math.sin(a) * r)}`;
+  if (design === 'stock') design = 'steel';
   if (design === 'steel') {
     spokes = `<circle r="${rr * .97}" fill="#3e4248"/><circle r="${rr * .78}" fill="#2f3238" stroke="#4b4f56" stroke-width="1"/>` +
       [0, 1, 2, 3, 4, 5].map(i => `<ellipse cx="${f1(Math.cos(i * Math.PI / 3) * rr * .6)}" cy="${f1(Math.sin(i * Math.PI / 3) * rr * .6)}" rx="${rr * .12}" ry="${rr * .08}" transform="rotate(${i * 60} ${f1(Math.cos(i * Math.PI / 3) * rr * .6)} ${f1(Math.sin(i * Math.PI / 3) * rr * .6)})" fill="#141518"/>`).join('') +
@@ -290,7 +291,7 @@ export function flatSVG(carId, cfg, opts = {}) {
 
 // ===== 3D画像への差し替え =====
 // まず平面のSVGを返し、3Dの静止画ができしだい同じ場所を <img> に置きかえる
-const V3D = 'v3';
+const V3D = 'v4';
 let use3d = null, car3dMod = null;
 const queue = [];
 let running = false;

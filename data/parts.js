@@ -24,6 +24,7 @@ export const PARTS = {
     { id: 'tone-on', name: 'ツートン（下半分の色を変える）', v: true, price: 400 },
   ],
   wheel: [
+    { id: 'wheel-stock', name: '純正', v: 'stock', price: 0 },
     { id: 'wheel-steel', name: 'スチール', v: 'steel', price: 0 },
     { id: 'wheel-mesh', name: 'メッシュ', v: 'mesh', price: 0 },
     { id: 'wheel-5spoke', name: '5本スポーク', v: '5spoke', price: 300 },

@@ -4,9 +4,67 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { RoomEnvironment } from '../vendor/three/RoomEnvironment.js';
 import { OrbitControls } from '../vendor/three/OrbitControls.js';
+import { GLTFLoader } from '../vendor/three/GLTFLoader.js';
+import { MeshoptDecoder } from '../vendor/three/meshopt_decoder.module.js';
 import { SHAPES } from '../../data/car-shapes.js';
 import { carById } from '../../data/cars.js';
 import { AE86, buildAE86Body, addAE86Parts, hwAt as ae86hw, topAt as ae86top } from './cars3d/ae86.js';
+
+// ===== プロ製の3Dモデル（glTF）：あれば最優先で使う =====
+// AE86：「Toyota AE86 Sprinter Trueno Zenki」Martin Trafas 作（CC BY 4.0）を軽量化（models/CREDITS.md）
+// 元データは cm 単位・前が+z。読み込み後に m 単位・前が+x・後端 x=0 に合わせる
+const MODELS = {
+  ae86: { url: '../../models/ae86.glb', scale: .01, zMin: -212.42, yMin: .57, popup: [70, 181, 1.17] },
+};
+const MODEL_SCENE = new Map(), MODEL_LOAD = new Map();
+export function hasModel(id) { return !!MODELS[id]; }
+export function loadModel(id) {
+  if (!MODELS[id]) return Promise.resolve(null);
+  if (!MODEL_LOAD.has(id)) MODEL_LOAD.set(id, new Promise(res => {
+    const l = new GLTFLoader(); l.setMeshoptDecoder(MeshoptDecoder);
+    l.load(new URL(MODELS[id].url, import.meta.url).href, g => { g.scene.traverse(o => { o.userData.shared = true; if (o.isMesh) { o.castShadow = true; } }); MODEL_SCENE.set(id, g.scene); res(g.scene); }, undefined, e => { console.warn('model load failed', id, e); res(null); });
+  }));
+  return MODEL_LOAD.get(id);
+}
+// glbからボディを組む（塗装・ツートン・ガラスの濃さを差しかえ、ホイールは車高と別に動かす）
+function buildFromModel(id, cfg, mats, root, bodyG) {
+  const M = MODELS[id], src = MODEL_SCENE.get(id);
+  const m = src.clone(true);
+  m.rotation.y = Math.PI / 2; m.scale.setScalar(M.scale);
+  m.position.set(-M.zMin * M.scale, -M.yMin * M.scale, 0);
+  const tintOp = [.55, .78, .93][cfg.tint || 0];
+  const front = mt => { const c = mt.clone(); c.side = THREE.FrontSide; return c; };
+  const paintF = front(mats.paint), toneF = cfg.tone ? front(mats.tone) : paintF;
+  m.traverse(o => {
+    if (!o.isMesh) return;
+    const n = o.material?.name || '';
+    if (n === 'Primary') o.material = paintF;
+    else if (n === 'Secondary') o.material = toneF;
+    else if (n === 'Windows') { const g = o.material.clone(); g.transparent = true; g.opacity = tintOp; g.color = new THREE.Color('#0c1218'); g.userData.own = true; o.material = g; }
+  });
+  const hy = bodyG.position.y; bodyG.position.y = 0;
+  bodyG.add(m); root.add(bodyG); root.updateMatrixWorld(true);
+  // リトラクタブルヘッドライトを閉じる（元データは開いた状態。ヒンジ位置で回転）
+  if (M.popup && !cfg.popupUp) {
+    const [Y0, Z0, ang] = M.popup;
+    const pivot = new THREE.Group(); pivot.position.set(0, Y0, Z0); m.add(pivot); m.updateMatrixWorld(true);
+    const lamps = []; m.traverse(o => { if (/^Headlights/.test(o.name) && !/^Headlights/.test(o.parent?.name || '')) lamps.push(o); });
+    lamps.forEach(o => pivot.attach(o)); pivot.rotation.x = ang; m.updateMatrixWorld(true);
+  }
+  // ホイール（FL/FR/RL/RR）はボディから外して地面基準に置く
+  const wheels = [];
+  m.traverse(o => { if (/^(FL|FR|RL|RR)_(Wheel|Caliper)/.test(o.name) && !/^(FL|FR|RL|RR)_(Wheel|Caliper)/.test(o.parent?.name || '')) wheels.push(o); });
+  const centers = {};
+  for (const w of wheels) {
+    const key = w.name.slice(0, 2);
+    const b = new THREE.Box3().setFromObject(w);
+    if (/Wheel/.test(w.name) && b.max.y - b.min.y > .3) centers[key] = b.getCenter(new THREE.Vector3());
+    root.attach(w);
+    if (cfg.wheel && cfg.wheel !== 'stock') w.visible = false;
+  }
+  bodyG.position.y = hy;
+  return centers;
+}
 
 // 実車資料から作り込んだ専用モデル（車種ID → 生成関数）
 const DETAIL = {
@@ -181,7 +239,7 @@ function buildWheel(S, cfg, side, mats) {
   const lip = new THREE.Mesh(new THREE.TorusGeometry(rr - .008, .012, 10, 48), mats.rim); rimG.add(lip);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(rr - .01, rr - .01, .14, 40, 1, true), mats.rimDark); barrel.rotation.x = Math.PI / 2; barrel.position.z = -side * .07; rimG.add(barrel);
   const face = (r, mat, depth = .02) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, depth, 40), mat); m.rotation.x = Math.PI / 2; return m; };
-  const d = cfg.wheel;
+  const d = cfg.wheel === 'stock' ? 'steel' : cfg.wheel;
   if (d === 'steel') {
     rimG.add(face(rr * .95, mats.steel));
     for (let i = 0; i < 6; i++) { const h = face(rr * .1, mats.rimDark, .03); const a = i * Math.PI / 3; h.position.set(Math.cos(a) * rr * .6, Math.sin(a) * rr * .6, side * .005); rimG.add(h); }
@@ -262,10 +320,12 @@ export function buildCar(carId, cfg) {
   const root = new THREE.Group();
   const bodyG = new THREE.Group();
   bodyG.position.y = (cfg.height || 0) * 15 * MM; // 車高：マイナス＝下げる
+  const useModel = MODEL_SCENE.has(car.id);
   const D = DETAIL[car.id];
   const B = D ? D(cfg, mats) : buildBody(S, cfg, mats);
-  bodyG.add(B.mesh);
-  if (D) B.parts(bodyG);
+  let wheelCenters = null;
+  if (useModel) wheelCenters = buildFromModel(car.id, cfg, mats, root, bodyG);
+  else { bodyG.add(B.mesh); if (D) B.parts(bodyG); }
   const len = S.len;
   // ライト
   const lightBox = (pts, mat, rear) => {
@@ -336,7 +396,10 @@ export function buildCar(carId, cfg) {
   root.add(bodyG);
   // ホイール
   const wz = x => (B.hwAt(x) * .985 - 95) * MM;
-  for (const wxm of [len - S.fo, len - S.fo - S.wb]) for (const s of [-1, 1]) { const w = buildWheel(S, cfg, s, mats); w.position.set(wxm * MM, S.tire / 2 * MM, s * wz(wxm)); root.add(w); }
+  if (wheelCenters) {
+    // glbのホイール位置に、選んだ社外ホイールを置く（純正のときはglbのホイールをそのまま使う）
+    if (cfg.wheel && cfg.wheel !== 'stock') for (const c of Object.values(wheelCenters)) { const s = c.z > 0 ? 1 : -1; const w = buildWheel({ ...S, tire: c.y * 2 / MM }, cfg, s, mats); w.position.set(c.x, c.y, c.z - s * .02); root.add(w); }
+  } else for (const wxm of [len - S.fo, len - S.fo - S.wb]) for (const s of [-1, 1]) { const w = buildWheel(S, cfg, s, mats); w.position.set(wxm * MM, S.tire / 2 * MM, s * wz(wxm)); root.add(w); }
   // ネオン
   if (cfg.neon) {
     const t = canvasTex(256, 128, (g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2); r.addColorStop(0, cfg.neon); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
@@ -423,7 +486,7 @@ function frame(camera, root, view) {
   camera.updateProjectionMatrix();
 }
 function dispose(obj) {
-  obj.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { if (x.map && x.map !== CARBON && x.map !== BLOB && x.map !== PLATE) x.map.dispose(); x.dispose(); }); });
+  obj.traverse(o => { if (o.userData.shared) { const m = o.material; if (m && m.userData?.own) m.dispose(); return; } if (o.geometry) o.geometry.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { if (x.map && x.map !== CARBON && x.map !== BLOB && x.map !== PLATE) x.map.dispose(); x.dispose(); }); });
 }
 
 const MEM = new Map();
@@ -432,6 +495,7 @@ export async function renderCarImage(key, carId, cfg, view = '34', w = 880, h = 
   if (MEM.has(key)) return MEM.get(key);
   const fromDb = await idbGet(key);
   if (fromDb) { MEM.set(key, fromDb); return fromDb; }
+  await loadModel(carId);
   const E = engine();
   E.renderer.setSize(w, h, false);
   const root = buildCar(carId, cfg);
@@ -472,10 +536,13 @@ export function mountViewer(container, carId, cfg) {
   const ro = new ResizeObserver(resize); ro.observe(container);
   const loop = () => { if (!alive) return; controls.update(); renderer.render(scene, camera); raf = requestAnimationFrame(loop); };
   loop();
-  return {
-    update(c) { scene.remove(root); dispose(root); root = buildCar(carId, c); scene.add(root); sun.target = root; },
+  let lastCfg = cfg;
+  const api = {
+    update(c) { lastCfg = c; scene.remove(root); dispose(root); root = buildCar(carId, c); scene.add(root); sun.target = root; },
     dispose() { alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); scene.remove(root); dispose(root); renderer.dispose(); renderer.forceContextLoss?.(); },
   };
+  if (hasModel(carId) && !MODEL_SCENE.has(carId)) loadModel(carId).then(sc => { if (alive && sc) api.update(lastCfg); });
+  return api;
 }
 
 // ===== IndexedDB キャッシュ =====
