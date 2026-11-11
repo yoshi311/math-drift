@@ -20,6 +20,9 @@ const MODELS = {
   // S13：「1992 Nissan Silvia S13」bagged_ls 作（CC BY 4.0）
   s13: { url: '../../models/s13.glb', scale: 1, zMin: -2.2943, yMin: -.0024,
     paint: ['CarPaint'], tone: ['CarPaint2'], glass: ['Windows'], wheel: /^(FL|FR|RL|RR)_\d+$/ },
+  // EK9：「Honda Civic Type R (EK9)」GT Cars: Hyperspeed 作（CC BY 4.0）。元が約6%小さいので実寸（全長4180）へ拡大
+  ek9: { url: '../../models/ek9.glb', scale: 1.0626, zMin: -1.8783, yMin: .0015,
+    paint: ['Body_MAT'], tone: [], glass: ['Glass_MAT', 'Glass_02_MAT'], wheel: /^Wheel_(FL|FR|RL|RR)_\d+$/ },
 };
 const MODEL_SCENE = new Map(), MODEL_LOAD = new Map();
 export function hasModel(id) { return !!MODELS[id]; }
@@ -60,9 +63,9 @@ function buildFromModel(id, cfg, mats, root, bodyG) {
   const wheels = [];
   m.traverse(o => { if (M.wheel.test(o.name) && !M.wheel.test(o.parent?.name || '')) wheels.push(o); });
   const boxes = {};
-  for (const w of wheels) { const k = w.name.slice(0, 2); (boxes[k] ||= new THREE.Box3()).union(new THREE.Box3().setFromObject(w)); }
+  for (const w of wheels) { const k = (w.name.match(/FL|FR|RL|RR/) || ['XX'])[0]; (boxes[k] ||= new THREE.Box3()).union(new THREE.Box3().setFromObject(w, true)); }
   const centers = {};
-  for (const [k, b] of Object.entries(boxes)) { const c = b.getCenter(new THREE.Vector3()); c.y = (b.max.y - b.min.y) / 2; centers[k] = c; }
+  for (const [k, b] of Object.entries(boxes)) { const c = b.getCenter(new THREE.Vector3()); c.r = (b.max.y - b.min.y) / 2; centers[k] = c; }
   for (const w of wheels) {
     root.attach(w);
     if (cfg.wheel && cfg.wheel !== 'stock') w.visible = false;
@@ -369,17 +372,41 @@ export function buildCar(carId, cfg) {
   if (!own && S.scoop) { const b = bboxOf(S.scoop); bodyG.add(box((b.x1 - b.x0) * MM, (b.y1 - b.y0) * MM, .42, cfg.bonnet ? new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .35, metalness: .3 }) : mats.paint, (b.x0 + b.x1) / 2 * MM, (b.y0 + b.y1) / 2 * MM, 0)); }
   // カーボンボンネット
   if (cfg.bonnet && S.hood) {
-    const [x1, y1, x2, y2] = S.hood; const ang = Math.atan2(y2 - y1, x2 - x1), L = Math.hypot(x2 - x1, y2 - y1);
-    const hw = B.hwAt((x1 + x2) / 2);
-    bodyG.add(box(L * MM * .96, .012, hw * 1.55 * MM, new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .3, metalness: .35 }), (x1 + x2) / 2 * MM, ((y1 + y2) / 2 + 4) * MM, 0, ang));
+    const carbon = new THREE.MeshStandardMaterial({ map: carbonTex(), roughness: .3, metalness: .35, side: THREE.DoubleSide });
+    if (useModel) {
+      // glb：ボンネットの表面を格子状に上から測り、その曲面に沿ったカーボンの板を作る
+      const meshes = []; bodyG.traverse(o => { if (o.isMesh && o.visible) meshes.push(o); }); root.updateMatrixWorld(true);
+      const rc = new THREE.Raycaster();
+      const down = (x, z) => { rc.set(new THREE.Vector3(x * MM, 3, z * MM), new THREE.Vector3(0, -1, 0)); const h = rc.intersectObjects(meshes, false)[0]; return h ? (h.point.y - bodyG.position.y) / MM : null; };
+      const wf = wheelCenters ? Math.max(...Object.values(wheelCenters).map(c => c.x)) / MM : len - S.fo;
+      const x1 = wf - 480, x2 = Math.min(len - 110, wf + 640), NX = 16, NZ = 12;
+      const zmax = Math.min(640, B.hw0 * .8), yc = down((x1 + x2) / 2, 0) || 800;
+      const pos = [], uv = [], idx = [], ok = [];
+      for (let i = 0; i <= NX; i++) for (let j = 0; j <= NZ; j++) {
+        const x = x1 + (x2 - x1) * i / NX, z = -zmax + 2 * zmax * j / NZ, y = down(x, z);
+        const good = y != null && y > yc - 260; ok.push(good);
+        pos.push(x * MM, ((good ? y : yc) + 5) * MM, z * MM); uv.push(i / NX * 3, j / NZ * 2);
+      }
+      for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+        const a0 = i * (NZ + 1) + j, a1 = a0 + 1, b0 = a0 + NZ + 1, b1 = b0 + 1;
+        if (ok[a0] && ok[a1] && ok[b0] && ok[b1]) idx.push(a0, b0, a1, a1, b0, b1);
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+      const t = carbon.map.clone(); t.needsUpdate = true; t.repeat.set(4, 4); carbon.map = t;
+      bodyG.add(new THREE.Mesh(g, carbon));
+    } else {
+      const [x1, y1, x2, y2] = S.hood; const ang = Math.atan2(y2 - y1, x2 - x1), L = Math.hypot(x2 - x1, y2 - y1);
+      const hw = B.hwAt((x1 + x2) / 2);
+      bodyG.add(box(L * MM * .96, .012, hw * 1.55 * MM, carbon, (x1 + x2) / 2 * MM, ((y1 + y2) / 2 + 4) * MM, 0, ang));
+    }
   }
   // エアロ
-  if (cfg.lip) bodyG.add(box(.62, (18 + cfg.lip * 12) * MM, B.hw0 * 1.9 * MM, mats.trim, (len - 300 + cfg.lip * 15) * MM, (S.rocker - 5) * MM, 0));
+  if (cfg.lip) bodyG.add(box(.34, (18 + cfg.lip * 12) * MM, B.hw0 * 1.85 * MM, mats.trim, (len - 170 + cfg.lip * 12) * MM, (S.rocker - 5) * MM, 0));
   if (cfg.skirt) {
     const rx = (len - S.fo - S.wb) + S.tire / 2 + 60, fx = (len - S.fo) - S.tire / 2 - 60;
     for (const s of [-1, 1]) bodyG.add(box((fx - rx) * MM, (60 + cfg.skirt * 30) * MM, .04, mats.trim, (rx + fx) / 2 * MM, (S.rocker + 10) * MM, s * (B.hw0 + 10) * MM));
   }
-  const wt = cfg.wing || S.stock;
+  const wt = cfg.wing || (own ? 0 : S.stock); // glbは純正スポイラーを自前で持つ
   if (wt) bodyG.add(wing(wt, S, B, mats, mats.paint));
   // ステッカー
   const d0 = (S.doors || [len / 2 + 400])[0], d1 = (S.doors && S.doors[1]) || d0 - 1000;
@@ -416,7 +443,7 @@ export function buildCar(carId, cfg) {
   const wz = x => (B.hwAt(x) * .985 - 95) * MM;
   if (wheelCenters) {
     // glbのホイール位置に、選んだ社外ホイールを置く（純正のときはglbのホイールをそのまま使う）
-    if (cfg.wheel && cfg.wheel !== 'stock') for (const c of Object.values(wheelCenters)) { const s = c.z > 0 ? 1 : -1; const w = buildWheel({ ...S, tire: c.y * 2 / MM }, cfg, s, mats); w.position.set(c.x, c.y, c.z - s * .02); root.add(w); }
+    if (cfg.wheel && cfg.wheel !== 'stock') for (const c of Object.values(wheelCenters)) { const s = c.z > 0 ? 1 : -1; const w = buildWheel({ ...S, tire: c.r * 2 / MM }, cfg, s, mats); w.position.set(c.x, c.y, c.z - s * .02); root.add(w); }
   } else for (const wxm of [len - S.fo, len - S.fo - S.wb]) for (const s of [-1, 1]) { const w = buildWheel(S, cfg, s, mats); w.position.set(wxm * MM, S.tire / 2 * MM, s * wz(wxm)); root.add(w); }
   // ネオン
   if (cfg.neon) {

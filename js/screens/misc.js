@@ -76,6 +76,7 @@ export function settingsScreen(app) {
     <section class="panel"><div class="panel-title">CREDITS</div>
       <p class="muted small">AE86の3Dモデル：「Toyota AE86 Sprinter Trueno Zenki」by Martin Trafas（<a href="https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9" target="_blank" rel="noopener">Sketchfab</a>）／<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>（軽量化・色変更などの改変あり）<br>
       S13の3Dモデル：「1992 Nissan Silvia S13」by bagged_ls（<a href="https://sketchfab.com/3d-models/1992-nissan-silvia-s13-6fa8f1948f954e3b980b5e96f203815a" target="_blank" rel="noopener">Sketchfab</a>）／<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>（ホイール角度・色変更などの改変あり）<br>
+      EK9の3Dモデル：「Honda Civic Type R (EK9)」by GT Cars: Hyperspeed（<a href="https://sketchfab.com/3d-models/honda-civic-type-r-ek9-4df76c1974cd4173a7a941bfec7714ab" target="_blank" rel="noopener">Sketchfab</a>）／<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>（軽量化・拡大・色変更などの改変あり）<br>
       3D描画：three.js（MIT）／キャラクターイラスト：画像生成AI（Pollinations.ai）で作成したオリジナル</p>
     </section>
     <section class="panel"><div class="panel-title">ABOUT</div>

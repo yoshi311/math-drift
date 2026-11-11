@@ -11,7 +11,9 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
 const doc = await io.read(src);
 await MeshoptSimplifier.ready; await MeshoptEncoder.ready;
 const R = { TireMaterial: .10, RimMaterial: .3, InteriorPlastic: .12, Interior: .12, InteriorPlastic2: .15, Seatbelt: .08, SteeringWheel: .2, BrakeCaliper: .15, Brake_Disc: .25,
-  Trim1: .35, Trim2: .45, Primary: 1, Secondary: 1, Windows: .8, LampCovers: .5, Reflector: .45, TailightFrame: .6 };
+  Trim1: .35, Trim2: .45, Primary: 1, Secondary: 1, Windows: .8, LampCovers: .5, Reflector: .45, TailightFrame: .6,
+  // EK9
+  Black_MAT: .35, Silver_MAT: .4, Body_MAT: .9, Tire_MAT: .25, Mirror_MAT: .5 };
 // ホイールの舵角・キャンバーをまっすぐに（FL_15 などのノードの回転を初期化）
 for (const n of doc.getRoot().listNodes()) if (/^(FL|FR|RL|RR)_\d+$/.test(n.getName())) n.setRotation([0, 0, 0, 1]);
 await doc.transform(weld());
