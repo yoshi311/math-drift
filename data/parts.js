@@ -19,6 +19,20 @@ export const COLORS = [
 ];
 
 export const PARTS = {
+  // 性能パーツ（見た目は変わらない。drop:'SR' は部品箱でしか出ない限定品）
+  engine: [
+    { id: 'engine-0', name: 'ノーマル', v: 0, price: 0, free: true },
+    { id: 'engine-1', name: '吸排気チューン（エアクリ＋マフラー）', v: 1, price: 400 },
+    { id: 'engine-2', name: 'ECUチューン（燃調・点火時期）', v: 2, price: 900 },
+    { id: 'engine-3', name: 'タービン交換', v: 3, price: 1800 },
+    { id: 'engine-4', name: 'フルチューンエンジン', v: 4, drop: 'SR' },
+  ],
+  tire: [
+    { id: 'tire-0', name: 'ノーマル', v: 0, price: 0, free: true },
+    { id: 'tire-1', name: 'スポーツラジアル', v: 1, price: 300 },
+    { id: 'tire-2', name: 'ハイグリップラジアル', v: 2, price: 800 },
+    { id: 'tire-3', name: 'Sタイヤ（競技用）', v: 3, drop: 'SR' },
+  ],
   tone: [
     { id: 'tone-none', name: 'なし', v: false, price: 0, free: true },
     { id: 'tone-on', name: 'ツートン（下半分の色を変える）', v: true, price: 400 },
@@ -97,12 +111,14 @@ export const PARTS = {
 };
 
 export const PART_LABELS = {
-  color: 'ボディカラー', tone: 'ツートン', wheel: 'ホイール', wcolor: 'ホイール色', inch: 'インチ', susp: 'サスペンション',
+  engine: 'エンジン', tire: 'タイヤ', color: 'ボディカラー', tone: 'ツートン', wheel: 'ホイール', wcolor: 'ホイール色', inch: 'インチ', susp: 'サスペンション',
   lip: 'フロント', skirt: 'サイド', wing: 'リア', bonnet: 'ボンネット', livery: 'ステッカー', tint: 'ガラス', neon: 'アンダーネオン',
 };
 
-// パーツによる性能ボーナス（演出用）
+// パーツによる性能ボーナス（バトルで効く：POWER＝前に出る／GRIP＝ミスをカバー／AERO＝スタート時のコンボ）
 export const PART_BONUS = {
+  'engine-1': { power: 5 }, 'engine-2': { power: 10 }, 'engine-3': { power: 18 }, 'engine-4': { power: 28 },
+  'tire-1': { grip: 5 }, 'tire-2': { grip: 10 }, 'tire-3': { grip: 18 },
   'lip-1': { aero: 3 }, 'lip-2': { aero: 6 }, 'lip-3': { aero: 10 },
   'skirt-1': { aero: 3 }, 'skirt-2': { aero: 5 },
   'wing-1': { aero: 3 }, 'wing-2': { aero: 8 }, 'wing-3': { aero: 14 },
@@ -110,6 +126,24 @@ export const PART_BONUS = {
   'susp-down': { grip: 4 }, 'susp-coil': { grip: 10 },
   'inch-16': { grip: 2 }, 'inch-17': { grip: 4 }, 'inch-18': { grip: 6 }, 'inch-19': { grip: 7 },
 };
+
+export function carStats(car, cfg) {
+  const base = { power: Math.min(100, Math.round(car.ps / 4.2)), grip: car.drive === '4WD' ? 62 : car.drive === 'MR' ? 60 : 52, aero: 30 };
+  const ids = [`lip-${cfg.lip}`, `skirt-${cfg.skirt}`, `wing-${cfg.wing}`, cfg.bonnet ? 'bonnet-1' : '', cfg.susp || '', `inch-${cfg.inch}`, `engine-${cfg.engine || 0}`, `tire-${cfg.tire || 0}`];
+  ids.forEach(id => { const b = PART_BONUS[id]; if (b) for (const k in b) base[k] += b[k]; });
+  base.grip += Math.max(0, -cfg.height);
+  for (const k in base) base[k] = Math.min(100, base[k]);
+  return base;
+}
+// バトルでの効果
+export function battlePerks(st) {
+  return {
+    saves: st.grip >= 85 ? 2 : st.grip >= 65 ? 1 : 0,          // ミスをカバーできる回数（勝敗判定のみ）
+    startCombo: st.aero >= 55 ? 2 : st.aero >= 40 ? 1 : 0,     // スタート時のコンボ
+    pace: Math.max(.55, .7 - Math.max(0, st.power - 30) / 400), // ライバルの進む速さ（演出）
+  };
+}
+export const rarity = p => p.drop || (p.price <= 300 ? 'N' : p.price <= 800 ? 'R' : 'SR');
 
 export function allPartIds() {
   const ids = COLORS.map(c => c.id);

@@ -40,7 +40,7 @@ export function runQuiz(root, opts) {
     </div>
     <div class="memo-toolbar hidden"></div>
   </div>`;
-  const drive = opts.drive ? createDrive($('.drive-slot', root), { total, ghost: opts.drive.ghost }) : null;
+  const drive = opts.drive ? createDrive($('.drive-slot', root), { total, ...opts.drive }) : null;
   const qpane = $('.q-pane', root), apane = $('.a-pane', root), card = $('.q-card', root), hintEl = $('.q-hint', root), toolbar = $('.memo-toolbar', root);
 
   root.querySelector('.quiz-top').addEventListener('click', async e => {

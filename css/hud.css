@@ -321,3 +321,21 @@ img.car3d{display:block;width:100%;height:auto;animation:fade .35s}
 .mg-val{font-size:1.2em;font-style:italic}
 .maint-res{padding-left:26px}
 .maint-gauge.big{max-width:420px}
+/* ===== 部品箱 ===== */
+.drop{position:relative;text-align:center;min-height:170px;padding-top:6px}
+.drop-box{font-size:64px;line-height:1}
+.drop.anim .drop-box{animation:dropShake .9s forwards}
+.drop.anim .drop-reveal{animation:vsPop .45s .85s backwards cubic-bezier(.3,1.6,.5,1)}
+@keyframes dropShake{0%,60%{transform:rotate(0)}10%,30%,50%{transform:rotate(-12deg) scale(1.05)}20%,40%{transform:rotate(12deg) scale(1.05)}100%{transform:scale(.6);opacity:.25}}
+.drop-tier{font-size:2.4em;font-weight:900;font-style:italic;line-height:1.1}
+.t-N .drop-tier{color:#9fb3c8}
+.t-R .drop-tier{color:var(--cyan);text-shadow:0 0 14px var(--cyan)}
+.t-SR .drop-tier{color:#ffc107;text-shadow:0 0 18px #ffb300,0 0 40px #ff7a00}
+.t-SR{background:radial-gradient(circle at 50% 60%,rgba(255,180,0,.22),transparent 65%)}
+.drop-name{font-size:1.3em;font-weight:700;margin:4px 0;display:flex;gap:8px;justify-content:center;align-items:center}
+.drop-name .sw{width:22px;height:22px;border-radius:50%;display:inline-block;border:1px solid #fff4}
+.opt.drop-only{border-color:rgba(255,193,7,.45)}
+.opt.drop-only b{color:#ffc107}
+.perks{margin-top:8px;line-height:1.6;color:var(--muted)}
+.perks b{color:var(--text,#fff)}
+.perk-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}

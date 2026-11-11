@@ -5,8 +5,8 @@ export const MISS_PEN = 5, HINT_PEN = 3, CAP = 240; // 秒（1問の計測上限
 export const comboMult = c => c >= 8 ? 2 : c >= 5 ? 1.5 : c >= 3 ? 1.2 : 1;
 export const fmtLap = s => { s = Math.max(0, s); const m = Math.floor(s / 60); return `${m}:${(s - m * 60).toFixed(1).padStart(4, '0')}`; };
 
-export function createDrive(root, { total, ghost = null }) {
-  const st = { combo: 0, maxCombo: 0, run: 0, pen: 0, splits: [], t0: 0, boostGP: 0, misses: 0 };
+export function createDrive(root, { total, ghost = null, startCombo = 0 }) {
+  const st = { combo: startCombo, maxCombo: 0, run: 0, pen: 0, splits: [], t0: 0, boostGP: 0, misses: 0 };
   const el = document.createElement('div');
   el.className = 'drive-hud';
   el.innerHTML = `

@@ -9,6 +9,8 @@ import { runQuiz } from '../components/quiz.js';
 import { addGP, track, checkAchievements } from '../gamify.js';
 import { carSVG, getConfig } from '../components/car-render.js';
 import { fmtLap } from '../components/drive.js';
+import { carStats, battlePerks } from '../../data/parts.js';
+import { openDrop } from '../drop.js';
 import { carById } from '../../data/cars.js';
 import { CHARS } from '../../data/story/index.js';
 import { playStory, hasScene } from './story.js';
@@ -112,6 +114,9 @@ export function stepScreen(app, { id }) {
     if (gpSum) setTimeout(() => sfx.coin(), 600);
     checkAchievements();
     if (s > 0) sfx.fanfare();
+    // 部品箱：初クリア・★アップ・ベスト更新のとき
+    const dropQ = s > 0 && (!old.cleared || s > old.stars || lapInfo.beat) ? (s === 3 || !old.cleared ? 'good' : 'base') : null;
+    if (dropQ) setTimeout(() => openDrop(dropQ), 1200);
     const nx = nextStep(id);
     app.innerHTML = `${topbar(`${st.label}　${esc(st.title)}`, { back: `#/chapter/${ch.id}` })}
     <div class="page result-page">
@@ -150,6 +155,7 @@ export function battleScreen(app, { id }) {
   if (!ch) { go('/map', true); return; }
   const rc = carById(ch.rival.car), rch = CHARS[ch.rival.char];
   const my = carById(state.garage.current);
+  const perks = battlePerks(carStats(my, getConfig(state, my.id)));
   let cleanup = null;
 
   app.innerHTML = `${topbar(`RIVAL BATTLE　STAGE ${ch.no}`, { back: `#/chapter/${ch.id}` })}
@@ -166,6 +172,8 @@ export function battleScreen(app, { id }) {
     <div class="panel center">
       <h2>${esc(ch.stage)}</h2>
       <p>章末テスト <b>${ch.battle.length}問</b>。正解するとキミの車が前に出る！<br><b class="hl">7割以上の正解で勝利</b>。ヒントは使えるけど、解説は答えたあとに出るよ。</p>
+      <div class="perk-row"><span class="chip r">POWER：ライバルを引き離す</span><span class="chip c">GRIP：ミスを${perks.saves}回カバー</span><span class="chip y">AERO：スタートコンボ ${perks.startCombo}</span></div>
+      <p class="muted small">性能はガレージのエンジン・タイヤ・エアロで上がる</p>
       <button class="btn btn-red btn-lg" id="go">BATTLE START ▶</button>
     </div>
   </div>`;
@@ -188,12 +196,12 @@ export function battleScreen(app, { id }) {
       <div class="lane"><div class="lane-car rival" style="left:0%">${carSVG(rc.id, {}, { view: "side", small: true })}</div></div><div class="goal en">GOAL</div></div>`;
     cleanup = runQuiz(app, {
       title: `VS ${rch.name}`, problems: ch.battle, mode: 'battle', modeLabel: 'BATTLE', header,
-      drive: { ghost: state.battles[id]?.splits || null },
+      drive: { ghost: state.battles[id]?.splits || null, startCombo: perks.startCombo },
       onExit: () => go(`/chapter/${ch.id}`),
       onAnswer: (ok, p, first) => {
         if (!first) return;
         answered++; if (ok) mine++;
-        const rv = Math.round(answered * .7);
+        const rv = Math.round(answered * perks.pace);
         const meEl = app.querySelector('.lane-car.me'), rvEl = app.querySelector('.lane-car.rival');
         if (meEl) meEl.style.left = (mine / total * 86) + '%';
         if (rvEl) rvEl.style.left = (rv / total * 86) + '%';
@@ -205,7 +213,8 @@ export function battleScreen(app, { id }) {
   async function finish(res, dr) {
     const ok = res.filter(r => r.ok).length, total = res.length;
     const pct = Math.round(ok / total * 100);
-    const win = pct >= 70;
+    const saved = Math.min(perks.saves, total - ok);
+    const win = (ok + saved) / total >= .7;
     const old = state.battles[id] || { cleared: false, best: 0 };
     const firstWin = win && !old.cleared;
     const lapInfo = lapRecord(old, dr, win);
@@ -227,7 +236,7 @@ export function battleScreen(app, { id }) {
         <div class="en rh-pos">${win ? 'P1' : 'P2'}</div>
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
-        <div class="muted">${ok} / ${total} 問正解　${win ? '' : `（7割で勝利：あと${Math.ceil(total * .7) - ok}問）`}</div>
+        <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : `（7割で勝利：あと${Math.ceil(total * .7) - ok - saved}問）`}</div>
         ${lapHTML(lapInfo, dr)}
         ${firstWin ? `<div class="rh-gp en">+200 GP</div>` : ''}
         ${unlocked ? `<div class="unlock"><div class="en">NEW CAR</div>${carSVG(unlocked.id, {})}<b>${esc(unlocked.name)}</b> がガレージに入った！</div>` : ''}
@@ -242,7 +251,7 @@ export function battleScreen(app, { id }) {
       </div>
     </div>`;
     app.querySelector('[data-act=again]').onclick = () => battleScreen(app, { id });
-    if (firstWin && hasScene(id + '-outro')) setTimeout(() => playStory(id + '-outro'), 900);
+    if (firstWin) setTimeout(async () => { await openDrop('great'); if (hasScene(id + '-outro')) playStory(id + '-outro'); }, 900);
   }
   return () => cleanup && cleanup();
 }

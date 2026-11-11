@@ -325,7 +325,8 @@ export function carSVG(carId, cfg, opts = {}) {
   if (!can3d() || opts.flat) return flat;
   const view = opts.view === 'side' ? 'side' : '34';
   const [w, h] = opts.small ? [440, 200] : [880, 400];
-  const key = hash(V3D + car.id + JSON.stringify(c) + view + w);
+  const { engine, tire, ...vis } = c; // 見た目に関係ない性能パーツは、画像キャッシュのキーから外す
+  const key = hash(V3D + car.id + JSON.stringify(vis) + view + w);
   const hit = car3dMod && car3dMod.cachedImage(key);
   if (hit) return imgTag(hit, car.name, view);
   queue.push({ key, carId: car.id, cfg: c, view, w, h, name: car.name });

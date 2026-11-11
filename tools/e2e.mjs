@@ -166,11 +166,13 @@ async function runQuizToEnd(wrongIdx = new Set(), label = '') {
   // ガレージ：パーツ購入
   await ev(`location.hash='#/garage'`); await sleep(500);
   await click('[data-tab=wing]'); await sleep(100);
-  await click('[data-buy="wing-3"]'); await sleep(300);
-  await click('.modal [data-i="1"]'); await sleep(500);
+  if (await exists('[data-buy="wing-3"]')) { await click('[data-buy="wing-3"]'); await sleep(300); await click('.modal [data-i="1"]'); }
+  else await click('[data-id="wing-3"]'); // 部品箱ですでに持っているとき
+  await sleep(500);
   await click('[data-tab=neon]'); await sleep(100);
-  await click('[data-buy="neon-cyan"]'); await sleep(300);
-  await click('.modal [data-i="1"]'); await sleep(500);
+  if (await exists('[data-buy="neon-cyan"]')) { await click('[data-buy="neon-cyan"]'); await sleep(300); await click('.modal [data-i="1"]'); }
+  else await click('[data-id="neon-cyan"]'); // 部品箱ですでに持っているとき
+  await sleep(500);
   await click('[data-tab=susp]'); await sleep(100);
   await shot('e2e-garage');
   const st4 = await ev(`JSON.parse(localStorage.getItem('mathdrift.save'))`);

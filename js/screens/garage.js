@@ -4,11 +4,11 @@ import { esc, confirmBox, toast, sfx, fmtNum, modal } from '../util.js';
 import { topbar } from '../ui.js';
 import { carSVG, getConfig, mountCarViewer } from '../components/car-render.js';
 import { CARS, carById } from '../../data/cars.js';
-import { COLORS, PARTS, PART_LABELS, PART_BONUS } from '../../data/parts.js';
+import { COLORS, PARTS, PART_LABELS, carStats, battlePerks } from '../../data/parts.js';
 import { spendGP, checkAchievements } from '../gamify.js';
 import { chapters } from '../../data/curriculum/index.js';
 
-const TABS = ['color', 'tone', 'wheel', 'wcolor', 'inch', 'susp', 'lip', 'skirt', 'wing', 'bonnet', 'livery', 'tint', 'neon'];
+const TABS = ['engine', 'tire', 'color', 'tone', 'wheel', 'wcolor', 'inch', 'susp', 'lip', 'skirt', 'wing', 'bonnet', 'livery', 'tint', 'neon'];
 let tab = 'color';
 
 function owned(id) {
@@ -16,14 +16,6 @@ function owned(id) {
   return state.garage.ownedParts.includes(id) || (p && (p.free || p.price === 0));
 }
 
-function carStats(car, cfg) {
-  const base = { power: Math.min(100, Math.round(car.ps / 4.2)), grip: car.drive === '4WD' ? 62 : car.drive === 'MR' ? 60 : 52, aero: 30 };
-  const ids = [`lip-${cfg.lip}`, `skirt-${cfg.skirt}`, `wing-${cfg.wing}`, cfg.bonnet ? 'bonnet-1' : '', cfg.susp || '', `inch-${cfg.inch}`];
-  ids.forEach(id => { const b = PART_BONUS[id]; if (b) for (const k in b) base[k] += b[k]; });
-  base.grip += Math.max(0, -cfg.height);
-  for (const k in base) base[k] = Math.min(100, base[k]);
-  return base;
-}
 
 export function garageScreen(app) {
   let viewer = null, seq = 0;
@@ -43,6 +35,7 @@ export function garageScreen(app) {
           <h2>${esc(car.name)}</h2>
           <div class="muted small">${car.year}年　${car.ps}ps　${car.kg}kg　— ${esc(car.desc)}</div>
           <div class="statbars">${[['POWER', stt.power, 'var(--red)'], ['GRIP', stt.grip, 'var(--cyan)'], ['AERO', stt.aero, 'var(--yellow)']].map(([l, v, c]) => `<div class="sb"><span class="en">${l}</span><div class="sbar"><div style="width:${v}%;background:${c}"></div></div><b class="en">${v}</b></div>`).join('')}</div>
+          <div class="perks small">${perksHTML(stt)}</div>
         </div>
       </section>
       <section class="car-strip">${state.garage.ownedCars.map(id => `<button class="cs-item ${id === carId ? 'on' : ''}" data-car="${id}">${carSVG(id, getConfig(state, id), { small: true })}<small>${esc(carById(id).name.split(' ').slice(-1)[0])}</small></button>`).join('')}
@@ -86,15 +79,16 @@ export function garageScreen(app) {
         <button class="btn btn-sm" data-num="-1">−</button><b class="en" style="font-size:1.4em;min-width:2.5em;text-align:center">${cfg.number}</b><button class="btn btn-sm" data-num="1">＋</button></div>` : '');
     }
     const key = tab;
-    return optGrid(key, cfg[key]);
+    return (tab === 'engine' || tab === 'tire' ? `<div class="muted small" style="margin-bottom:8px">見た目は変わらないが、バトルで効く性能パーツ。★のついた限定品は、ステップクリアの部品箱でしか手に入らない。</div>` : '') + optGrid(key, cfg[key] ?? 0);
   }
 
   function optGrid(cat, curVal, by = 'v') {
     return `<div class="opt-grid">${PARTS[cat].map(p => {
       const own = owned(p.id);
       const on = by === 'id' ? curVal === p.id : JSON.stringify(curVal) === JSON.stringify(p.v);
-      return `<button class="opt ${on ? 'on' : ''} ${own ? '' : 'locked'}" ${own ? `data-equip="${cat}" data-id="${p.id}"` : `data-buy="${p.id}"`}>
-        <b>${esc(p.name)}</b><small>${on ? '装着中' : own ? '所持' : `🔒 ${p.price} GP`}</small></button>`;
+      if (p.drop && !own) return `<button class="opt locked drop-only" disabled><b>★ ？？？</b><small>部品箱限定（${p.drop}）</small></button>`;
+      return `<button class="opt ${on ? 'on' : ''} ${own ? '' : 'locked'} ${p.drop ? 'drop-only' : ''}" ${own ? `data-equip="${cat}" data-id="${p.id}"` : `data-buy="${p.id}"`}>
+        <b>${p.drop ? '★ ' : ''}${esc(p.name)}</b><small>${on ? '装着中' : own ? '所持' : `🔒 ${p.price} GP`}</small></button>`;
     }).join('')}</div>`;
   }
 
@@ -206,4 +200,9 @@ export function dealerScreen(app) {
   app.addEventListener('click', onClick);
   render();
   return () => app.removeEventListener('click', onClick);
+}
+
+export function perksHTML(stt) {
+  const k = battlePerks(stt);
+  return `<b class="en">BATTLE</b>　POWER：ライバルを引き離す　／　GRIP：ミスを<b>${k.saves}</b>回カバー${k.saves < 2 ? `（${k.saves ? 85 : 65}でもう1回）` : ''}　／　AERO：スタート時コンボ<b>${k.startCombo}</b>${k.startCombo < 2 ? `（${k.startCombo ? 55 : 40}で＋1）` : ''}`;
 }
