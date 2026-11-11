@@ -10,7 +10,6 @@ import { briefHTML } from './step.js';
 import { dueList, condition, completeMaint, doneToday, MAINT_MAX } from '../maint.js';
 import { addGP, track, checkAchievements } from '../gamify.js';
 import { sfx } from '../util.js';
-import { fmtLap } from '../components/drive.js';
 
 const ST = {
   new: { label: '未挑戦', cls: '', icon: '－' },
@@ -104,7 +103,7 @@ export function maintScreen(app) {
   const ps = dueList().slice(0, MAINT_MAX);
   if (!ps.length) { toast('点検が必要な問題はありません。コンディション100%！'); go('/home', true); return; }
   return runQuiz(app, {
-    title: '今日のメンテ', problems: ps, mode: 'review', modeLabel: 'MAINTENANCE', drive: { ghost: null },
+    title: '今日のメンテ', problems: ps, mode: 'review', modeLabel: 'MAINTENANCE', drive: {},
     onExit: () => go('/home'),
     onFinish: (res, dr) => {
       const ok = res.filter(r => r.ok).length;
@@ -120,7 +119,7 @@ export function maintScreen(app) {
         <div class="maint-gauge big"><div class="mg-bar"><i class="${after.cls}" style="width:${after.pct}%"></i></div>
           <div class="en mg-val">${before.pct}% → <b>${after.pct}%</b></div></div>
         <div class="rh-score en">${ok}<small> / ${res.length}</small></div>
-        ${dr ? `<div class="small muted">LAP ${fmtLap(dr.lap)}　最大コンボ ${dr.maxCombo}</div>` : ''}
+        ${dr ? `<div class="small muted">SCORE ${dr.score}　最大コンボ ${dr.maxCombo}</div>` : ''}
         ${first ? `<div class="rh-gp en">+${bonus} GP</div><div>メンテ <b class="hl">${state.maint.streak}日連続</b>！${state.maint.streak >= 2 ? '' : '明日も続けるとボーナスアップ'}</div>` : ''}
         <p class="muted small">正解した問題は、次の点検日がのびる（1→3→7→14→30日）。間違えた問題は明日以降にまた出るよ。</p>
       </div>

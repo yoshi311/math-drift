@@ -8,7 +8,6 @@ import { steps, chapters, nextStep } from '../../data/curriculum/index.js';
 import { runQuiz } from '../components/quiz.js';
 import { addGP, track, checkAchievements } from '../gamify.js';
 import { carSVG, getConfig } from '../components/car-render.js';
-import { fmtLap } from '../components/drive.js';
 import { carStats, battlePerks } from '../../data/parts.js';
 import { openDrop } from '../drop.js';
 import { carById } from '../../data/cars.js';
@@ -87,7 +86,7 @@ export function stepScreen(app, { id }) {
     sfx.rev();
     cleanup = runQuiz(app, {
       title: `${st.label} ${st.title}`, problems: st.main, mode: 'main', modeLabel: '本番走行',
-      drive: { ghost: state.progress[id]?.splits || null },
+      drive: {},
       onExit: () => go(`/chapter/${ch.id}`),
       onFinish: (res, dr) => result(res, dr),
     });
@@ -99,14 +98,14 @@ export function stepScreen(app, { id }) {
     const noHint = res.every(r => !r.hint);
     const s = ratio >= 1 ? (noHint ? 3 : 2) : ratio >= .8 ? 1 : 0;
     const old = state.progress[id] || { stars: 0, cleared: false, best: 0 };
-    const lapInfo = lapRecord(old, dr, s > 0);
+    const sc = scoreRecord(old, dr, s > 0);
     const rewards = [];
     if (s > 0 && !old.cleared) { rewards.push(['ステップ初クリア', 50]); track('stepClear'); }
     else if (s > 0 && old.cleared) track('replay');
     if (s > old.stars) rewards.push([`★ ${s - old.stars}個 獲得`, (s - old.stars) * 20]);
     if (ratio === 1) { state.stats.perfect++; track('perfect'); }
-    state.progress[id] = { ...old, stars: Math.max(old.stars, s), cleared: old.cleared || s > 0, best: Math.max(old.best || 0, Math.round(ratio * 100)), ...lapInfo.save };
-    if (lapInfo.beat) { state.stats.ghost = (state.stats.ghost || 0) + 1; rewards.push(['ゴースト撃破', 30]); }
+    state.progress[id] = { ...old, stars: Math.max(old.stars, s), cleared: old.cleared || s > 0, best: Math.max(old.best || 0, Math.round(ratio * 100)), ...sc.save };
+    if (sc.beat) { state.stats.hiscore = (state.stats.hiscore || 0) + 1; rewards.push(['ハイスコア更新', 30]); }
     if (dr && dr.maxCombo >= 10) state.stats.combo10 = (state.stats.combo10 || 0) + 1;
     save();
     rewards.forEach(([r, g]) => addGP(g, r, true));
@@ -115,7 +114,7 @@ export function stepScreen(app, { id }) {
     checkAchievements();
     if (s > 0) sfx.fanfare();
     // 部品箱：初クリア・★アップ・ベスト更新のとき
-    const dropQ = s > 0 && (!old.cleared || s > old.stars || lapInfo.beat) ? (s === 3 || !old.cleared ? 'good' : 'base') : null;
+    const dropQ = s > 0 && (!old.cleared || s > old.stars || sc.beat) ? (s === 3 || !old.cleared ? 'good' : 'base') : null;
     if (dropQ) setTimeout(() => openDrop(dropQ), 1200);
     const nx = nextStep(id);
     app.innerHTML = `${topbar(`${st.label}　${esc(st.title)}`, { back: `#/chapter/${ch.id}` })}
@@ -126,8 +125,8 @@ export function stepScreen(app, { id }) {
         <div class="en rh-label">${s > 0 ? 'SECTOR CLEAR' : 'TRY AGAIN'}</div>
         <div class="rh-score en">${ok}<small> / ${total}</small></div>
         <div class="rh-stars">${stars(s)}</div>
-        ${lapHTML(lapInfo, dr)}
-        <div class="next-goal">${nextGoal(s, ok, total, lapInfo)}</div>
+        ${scoreHTML(sc, dr)}
+        <div class="next-goal">${nextGoal(s, ok, total)}</div>
         ${gpSum ? `<div class="rh-gp en">+${gpSum} GP</div>` : ''}
         ${rewards.map(r => `<div class="small">${r[0]}　+${r[1]}GP</div>`).join('')}
       </div>
@@ -158,7 +157,7 @@ export function battleScreen(app, { id }) {
   const hard = new URLSearchParams(location.hash.split('?')[1] || '').get('hard') === '1' && !!state.battles[id]?.cleared;
   const perks = battlePerks(carStats(my, getConfig(state, my.id)));
   if (hard) perks.saves = 0;
-  const NEED = hard ? .8 : .7, LIMIT = hard ? ch.battle.length * 30 : null;
+  const NEED = hard ? .8 : .7;
   let cleanup = null;
 
   app.innerHTML = `${topbar(`RIVAL BATTLE　STAGE ${ch.no}`, { back: `#/chapter/${ch.id}` })}
@@ -174,7 +173,7 @@ export function battleScreen(app, { id }) {
     </div>
     <div class="panel center">
       <h2>${esc(ch.stage)}</h2>
-      ${hard ? `<div class="en hard-badge">HARD MODE</div><p>章末テスト <b>${ch.battle.length}問</b>。<b class="hl">8割以上の正解</b>、しかも <b class="hl">LAP ${fmtLap(LIMIT)} 以内</b>で勝利。GRIPのカバーはなし！</p>` :
+      ${hard ? `<div class="en hard-badge">HARD MODE</div><p>章末テスト <b>${ch.battle.length}問</b>。<b class="hl">8割以上の正解</b>で勝利。<b class="hl">ヒントは使えない</b>、GRIPのカバーもなし！</p>` :
       `<p>章末テスト <b>${ch.battle.length}問</b>。正解するとキミの車が前に出る！<br><b class="hl">7割以上の正解で勝利</b>。ヒントは使えるけど、解説は答えたあとに出るよ。</p>`}
       <div class="perk-row"><span class="chip r">POWER：ライバルを引き離す</span><span class="chip c">GRIP：ミスを${perks.saves}回カバー</span><span class="chip y">AERO：スタートコンボ ${perks.startCombo}</span></div>
       <p class="muted small">性能はガレージのエンジン・タイヤ・エアロで上がる</p>
@@ -200,7 +199,7 @@ export function battleScreen(app, { id }) {
       <div class="lane"><div class="lane-car rival" style="left:0%">${carSVG(rc.id, {}, { view: "side", small: true })}</div></div><div class="goal en">GOAL</div></div>`;
     cleanup = runQuiz(app, {
       title: `VS ${rch.name}`, problems: ch.battle, mode: 'battle', modeLabel: 'BATTLE', header,
-      drive: { ghost: state.battles[id]?.splits || null, startCombo: perks.startCombo },
+      drive: { startCombo: perks.startCombo }, noHint: hard,
       onExit: () => go(`/chapter/${ch.id}`),
       onAnswer: (ok, p, first) => {
         if (!first) return;
@@ -218,14 +217,14 @@ export function battleScreen(app, { id }) {
     const ok = res.filter(r => r.ok).length, total = res.length;
     const pct = Math.round(ok / total * 100);
     const saved = Math.min(perks.saves, total - ok);
-    const win = (ok + saved) / total >= NEED && (!LIMIT || (dr && dr.lap <= LIMIT));
+    const win = (ok + saved) / total >= NEED;
     const firstHard = hard && win && !old.hard;
     const old = state.battles[id] || { cleared: false, best: 0 };
     const firstWin = win && !old.cleared;
-    const lapInfo = lapRecord(old, dr, win);
-    state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...lapInfo.save, ...(firstHard ? { hard: true } : {}) };
+    const sc = scoreRecord(old, dr, win);
+    state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...sc.save, ...(firstHard ? { hard: true } : {}) };
     if (firstHard) addGP(300, 'ハードモード制覇', true);
-    if (lapInfo.beat) state.stats.ghost = (state.stats.ghost || 0) + 1;
+    if (sc.beat) state.stats.hiscore = (state.stats.hiscore || 0) + 1;
     let unlocked = null;
     if (firstWin) {
       addGP(200, 'ライバル撃破ボーナス', true);
@@ -242,9 +241,9 @@ export function battleScreen(app, { id }) {
         <div class="en rh-pos">${win ? 'P1' : 'P2'}</div>
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
-        <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : LIMIT && (ok + saved) / total >= NEED ? `（タイムオーバー：${fmtLap(LIMIT)} 以内で勝利）` : `（${hard ? 8 : 7}割で勝利：あと${Math.ceil(total * NEED) - ok - saved}問）`}</div>
+        <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : `（${hard ? 8 : 7}割で勝利：あと${Math.ceil(total * NEED) - ok - saved}問）`}</div>
         ${firstHard ? '<div class="rh-gp en">HARD CLEAR +300 GP</div>' : ''}
-        ${lapHTML(lapInfo, dr)}
+        ${scoreHTML(sc, dr)}
         ${firstWin ? `<div class="rh-gp en">+200 GP</div>` : ''}
         ${unlocked ? `<div class="unlock"><div class="en">NEW CAR</div>${carSVG(unlocked.id, {})}<b>${esc(unlocked.name)}</b> がガレージに入った！</div>` : ''}
       </div>
@@ -266,30 +265,24 @@ export function battleScreen(app, { id }) {
   return () => cleanup && cleanup();
 }
 
-// ===== LAPタイムの記録（ベストと区間タイム＝次回のゴースト） =====
-export function lapRecord(old, dr, valid) {
+// ===== スコアの記録（一発正解100点×コンボ倍率。ヒントを使った問題は半分） =====
+export function scoreRecord(old, dr, valid) {
   if (!dr) return { save: {} };
-  const prev = old.lap || null;
-  const better = valid && (!prev || dr.lap < prev);
-  return {
-    lap: dr.lap, prev, best: better ? dr.lap : prev, isBest: better, beat: better && !!prev,
-    save: better ? { lap: dr.lap, splits: dr.splits } : {},
-  };
+  const prev = old.score || 0;
+  const better = valid && dr.score > prev;
+  return { score: dr.score, prev, isBest: better, beat: better && prev > 0, save: better ? { score: dr.score } : {} };
 }
-export function lapHTML(li, dr) {
+export function scoreHTML(sc, dr) {
   if (!dr) return '';
-  const d = li.prev ? dr.lap - li.prev : null;
   return `<div class="rh-lap">
-    <div><span class="en muted">LAP</span> <b class="en">${fmtLap(dr.lap)}</b>
-      ${d != null ? `<span class="en dh-delta ${d <= 0 ? 'g' : 'r'}">${d <= 0 ? '−' : '＋'}${Math.abs(d).toFixed(1)}</span>` : ''}</div>
-    ${li.isBest ? `<div class="en rh-best">${li.prev ? 'NEW RECORD! ゴースト撃破' : 'FIRST RECORD'}</div>` : li.prev ? `<div class="small muted">ベスト ${fmtLap(li.prev)}</div>` : ''}
+    <div><span class="en muted">SCORE</span> <b class="en">${dr.score}</b>${sc.beat ? ` <span class="en dh-delta g">+${dr.score - sc.prev}</span>` : ''}</div>
+    ${sc.isBest ? `<div class="en rh-best">${sc.prev ? 'NEW HIGH SCORE!' : 'FIRST RECORD'}</div>` : sc.prev ? `<div class="small muted">ハイスコア ${sc.prev}</div>` : ''}
     <div class="small muted">最大コンボ ${dr.maxCombo}${dr.boostGP ? `　ブーストボーナス +${dr.boostGP}GP` : ''}</div>
   </div>`;
 }
-function nextGoal(s, ok, total, li) {
+function nextGoal(s, ok, total) {
   if (s === 0) return `🎯 あと <b>${Math.ceil(total * .8) - ok}問</b> 正解でクリア！`;
   if (s === 1) return `🎯 次は全問正解で★2（あと${total - ok}問）`;
   if (s === 2) return '🎯 次はヒントなしで★3！';
-  if (li.best) return `🎯 次の目標：${fmtLap(Math.max(0, li.best - 3))}（ベスト −3秒）`;
-  return '🏁 パーフェクト！';
+  return '🏁 パーフェクト！ 次はノーミスでコンボをつなごう';
 }

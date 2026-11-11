@@ -60,7 +60,7 @@ const TASK_POOL = [
   { id: 'brief2', label: 'ブリーフィング（解説）を2つ読む', ev: 'brief', n: 2, gp: 40 },
   { id: 'battle1', label: 'ライバルバトルに挑戦する', ev: 'battle', n: 1, gp: 100 },
   { id: 'replay1', label: 'クリア済みステップを再走する', ev: 'replay', n: 1, gp: 60 },
-  { id: 'attack1', label: 'タイムアタックを1本走る', ev: 'attack', n: 1, gp: 60, needAttack: true },
+  { id: 'attack1', label: 'スコアアタックを1本走る', ev: 'attack', n: 1, gp: 60, needAttack: true },
   { id: 'maint1', label: '今日のメンテを完了する', ev: 'maint', n: 1, gp: 80, needDue: true },
 ];
 export const DAILY_BONUS = 150;
@@ -151,9 +151,9 @@ export const ACHIEVEMENTS = [
   { id: 'rev50', name: '不屈の走り屋', desc: '間違えた問題を50問解き直す', test: s => s.stats.revenge >= 50 },
   { id: 'mt3', name: 'メンテ3日連続', desc: '今日のメンテを3日続けて完了', test: s => (s.maint?.streak || 0) >= 3 },
   { id: 'mt7', name: '整備の鬼', desc: '今日のメンテを7日続けて完了', test: s => (s.maint?.streak || 0) >= 7 },
-  { id: 'gh10', name: 'ゴーストバスター', desc: '自分のゴーストを10回抜く', test: s => (s.stats.ghost || 0) >= 10 },
+  { id: 'hs10', name: 'スコアハンター', desc: 'ハイスコアを10回更新する', test: s => (s.stats.hiscore || 0) >= 10 },
   { id: 'cb10', name: 'フルブースト', desc: '1回の走行で10コンボ', test: s => (s.stats.combo10 || 0) >= 1 },
-  { id: 'ta1', name: 'タイムアタッカー', desc: 'タイムアタックで今週のP1', test: s => (s.stats.attackTop || 0) >= 1 },
+  { id: 'ta1', name: 'スコアアタッカー', desc: 'スコアアタックで今週のP1', test: s => (s.stats.attackTop || 0) >= 1 },
   { id: 'hard1', name: 'ハードモード制覇', desc: 'ライバルにハードモードで勝つ', test: s => Object.values(s.battles).some(b => b.hard) },
   { id: 'drop10', name: 'パーツハンター', desc: '部品箱でパーツを10個手に入れる', test: s => (s.stats.drops || 0) >= 10 },
   { id: 'cust1', name: 'はじめてのカスタム', desc: 'パーツを買う', test: s => s.stats.customs >= 1 },

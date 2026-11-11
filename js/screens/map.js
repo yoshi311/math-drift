@@ -90,7 +90,7 @@ export function chapterScreen(app, { id }) {
     </a>
     ${p.battle ? `<a class="battle-card hard ${state.battles[id].hard ? 'beat' : ''}" href="#/battle/${ch.id}?hard=1">
       <div class="en bc-label">HARD MODE</div>
-      <div class="bc-title">再戦 VS ${esc(rch.name)}<small>8割以上＋制限タイム ／ 勝つとSR確率の高い部品箱</small></div>
+      <div class="bc-title">再戦 VS ${esc(rch.name)}<small>8割以上＋ヒントなし ／ 勝つとSR確率の高い部品箱</small></div>
       <div class="bc-state">${state.battles[id].hard ? '<span class="chip g">HARD WIN</span>' : '<span class="chip y">🔥 挑戦できる</span>'}</div>
     </a>` : ''}
   </div>`;

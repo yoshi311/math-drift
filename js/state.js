@@ -15,7 +15,7 @@ function defaults() {
     battles: {},       // chapterId: {cleared, best}
     history: {},       // problemId: {status, tries, wrong, last, box, due}（box/due＝メンテの点検日）
     maint: { last: '', streak: 0, total: 0 },
-    attack: null,      // 週替わりタイムアタック {wk, best, splits, runs, passed, allBest}
+    attack: null,      // 週替わりスコアアタック {kind, wk, best, runs, passed, allBest}
     memos: {},         // problemId: {strokes:[], text:''}
     seenStory: {},     // sceneId: true
     achievements: {},  // id: timestamp

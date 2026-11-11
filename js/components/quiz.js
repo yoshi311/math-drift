@@ -10,7 +10,7 @@ import { state } from '../state.js';
 const LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
- * opts: { drive:{ghost:[区間の累計秒]|null} で走行HUD, title, problems, mode:'practice'|'main'|'battle'|'review', requeueWrong, header(html), onAnswer(ok, p), onFinish(results), onExit, modeLabel }
+ * opts: { drive:{startCombo} で走行HUD, title, problems, mode:'practice'|'main'|'battle'|'review', requeueWrong, header(html), onAnswer(ok, p), onFinish(results), onExit, modeLabel }
  */
 export function runQuiz(root, opts) {
   const queue = opts.problems.map(p => ({ p, retry: false }));
@@ -25,7 +25,7 @@ export function runQuiz(root, opts) {
       <button class="btn btn-ghost icon-btn" data-act="exit" aria-label="やめる">✕</button>
       <div class="title"><span class="chip ${opts.mode === 'battle' ? 'r' : opts.mode === 'main' ? 'y' : 'c'}">${opts.modeLabel || ''}</span> ${esc(opts.title || '')}</div>
       <div class="q-dots"></div>
-      <button class="btn btn-sm" data-act="hint">💡 ヒント</button>
+      ${opts.noHint ? '' : '<button class="btn btn-sm" data-act="hint">💡 ヒント</button>'}
       <button class="btn btn-sm" data-act="memo">✎ メモ</button>
     </div>
     <div class="drive-slot"></div>
@@ -85,7 +85,6 @@ export function runQuiz(root, opts) {
     memo = createMemo(qpane, toolbar, p.id);
     $('[data-act=memo]', root).classList.remove('btn-primary');
     renderAnswer();
-    if (drive && !results.has(p.id)) drive.start();
     dots();
     qpane.scrollTop = 0;
   }
