@@ -3,13 +3,14 @@ import { $, $$, esc, shuffle, sfx, toast, confirmBox } from '../util.js';
 import { fmt, gradeValue } from '../mathfmt.js';
 import { keypadHTML, MathInput, fracKeyLabel, bindHardwareKeys } from './keypad.js';
 import { createMemo } from './memo.js';
-import { recordAnswer } from '../gamify.js';
+import { recordAnswer, addGP } from '../gamify.js';
+import { createDrive } from './drive.js';
 import { state } from '../state.js';
 
 const LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
- * opts: { title, problems, mode:'practice'|'main'|'battle'|'review', requeueWrong, header(html), onAnswer(ok, p), onFinish(results), onExit, modeLabel }
+ * opts: { drive:{ghost:[区間の累計秒]|null} で走行HUD, title, problems, mode:'practice'|'main'|'battle'|'review', requeueWrong, header(html), onAnswer(ok, p), onFinish(results), onExit, modeLabel }
  */
 export function runQuiz(root, opts) {
   const queue = opts.problems.map(p => ({ p, retry: false }));
@@ -27,6 +28,7 @@ export function runQuiz(root, opts) {
       <button class="btn btn-sm" data-act="hint">💡 ヒント</button>
       <button class="btn btn-sm" data-act="memo">✎ メモ</button>
     </div>
+    <div class="drive-slot"></div>
     ${opts.header || ''}
     <div class="quiz-body">
       <section class="q-pane">
@@ -38,6 +40,7 @@ export function runQuiz(root, opts) {
     </div>
     <div class="memo-toolbar hidden"></div>
   </div>`;
+  const drive = opts.drive ? createDrive($('.drive-slot', root), { total, ghost: opts.drive.ghost }) : null;
   const qpane = $('.q-pane', root), apane = $('.a-pane', root), card = $('.q-card', root), hintEl = $('.q-hint', root), toolbar = $('.memo-toolbar', root);
 
   root.querySelector('.quiz-top').addEventListener('click', async e => {
@@ -82,6 +85,7 @@ export function runQuiz(root, opts) {
     memo = createMemo(qpane, toolbar, p.id);
     $('[data-act=memo]', root).classList.remove('btn-primary');
     renderAnswer();
+    if (drive && !results.has(p.id)) drive.start();
     dots();
     qpane.scrollTop = 0;
   }
@@ -212,7 +216,12 @@ export function runQuiz(root, opts) {
     const first = !results.has(p.id);
     if (first) {
       results.set(p.id, { ok: g.ok, hint: cur.hint });
-      recordAnswer(p.id, g.ok, opts.mode, { memo: memo && memo.used });
+      const { gp } = recordAnswer(p.id, g.ok, opts.mode, { memo: memo && memo.used });
+      if (drive) {
+        const m = drive.answer(g.ok, cur.hint);
+        const bonus = Math.round(gp * (m - 1));
+        if (bonus > 0) { addGP(bonus, '', true); drive.addBoostGP(bonus); }
+      }
     }
     g.ok ? sfx.ok() : sfx.ng();
     // 選択肢の色
@@ -246,10 +255,11 @@ export function runQuiz(root, opts) {
   function finish() {
     cleanup();
     const list = opts.problems.map(p => ({ id: p.id, ...(results.get(p.id) || { ok: false }) }));
-    opts.onFinish && opts.onFinish(list);
+    opts.onFinish && opts.onFinish(list, drive ? drive.result() : null);
   }
 
   function cleanup() {
+    if (drive) drive.destroy();
     if (memo) { memo.destroy(); memo = null; }
     if (unbindKeys) { unbindKeys(); unbindKeys = null; }
   }

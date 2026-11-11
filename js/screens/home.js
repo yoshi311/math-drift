@@ -8,6 +8,7 @@ import { carById } from '../../data/cars.js';
 import { rankInfo, checkLogin, claimLogin, ensureDaily, LOGIN_REWARDS, DAILY_BONUS } from '../gamify.js';
 import { GRADES, steps } from '../../data/curriculum/index.js';
 import { playStory } from './story.js';
+import { condition, doneToday } from '../maint.js';
 
 export function titleScreen(app) {
   app.innerHTML = `<div class="title-screen">
@@ -47,6 +48,7 @@ export function homeScreen(app) {
   const rec = recommendStep();
   const cleared = Object.values(state.progress).filter(p => p.cleared).length;
   const totalSteps = Object.keys(steps).length;
+  const cond = condition();
 
   app.innerHTML = `${topbar('<span class="en logo-mini">MATH<b>DRIFT</b></span>', { back: '' })}
   <div class="page home">
@@ -86,6 +88,14 @@ export function homeScreen(app) {
       <a class="menu-btn m-rec" href="#/records"><span class="mi">🏆</span><b>記録・実績</b><small>バッジ・成績</small></a>
       <a class="menu-btn m-set" href="#/settings"><span class="mi">⚙</span><b>設定</b><small>文字サイズ・保存</small></a>
     </section>
+
+    <a class="panel maint-card ${cond.cls}" href="#/maint">
+      <div class="panel-title">MAINTENANCE　車のコンディション</div>
+      <div class="maint-gauge"><div class="mg-bar"><i class="${cond.cls}" style="width:${cond.pct}%"></i></div><b class="en mg-val">${cond.pct}%</b></div>
+      <div class="row"><span class="grow">${cond.n ? `🔧 <b>${esc(cond.label)}</b>　点検が必要な問題 <b class="en">${cond.n}</b>問` : '✔ 点検が必要な問題はなし。絶好調！'}
+        ${state.maint.streak && (doneToday() || state.maint.last) ? `<small class="muted">　メンテ連続 ${state.maint.streak}日</small>` : ''}</span>
+        ${cond.n ? `<span class="btn btn-red btn-sm">今日のメンテ ▶</span>` : ''}</div>
+    </a>
 
     <section class="panel daily">
       <div class="panel-title">TODAY'S MISSION　今日の課題</div>

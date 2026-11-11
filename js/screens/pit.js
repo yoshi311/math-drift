@@ -7,6 +7,10 @@ import { fmt } from '../mathfmt.js';
 import { GRADES, chapters, steps, problems } from '../../data/curriculum/index.js';
 import { runQuiz } from '../components/quiz.js';
 import { briefHTML } from './step.js';
+import { dueList, condition, completeMaint, doneToday, MAINT_MAX } from '../maint.js';
+import { addGP, track, checkAchievements } from '../gamify.js';
+import { sfx } from '../util.js';
+import { fmtLap } from '../components/drive.js';
 
 const ST = {
   new: { label: '未挑戦', cls: '', icon: '－' },
@@ -91,6 +95,41 @@ export function pitSingle(app, { pid }) {
     title: st ? `${st.label} ${st.title}` : `STAGE ${chapters[p.chapter].no} バトル問題`,
     problems: [p], mode: 'review', modeLabel: 'PIT',
     onExit: back, onFinish: back,
+  });
+}
+
+// ===== 今日のメンテ（点検日が来た問題を最大10問） =====
+export function maintScreen(app) {
+  const before = condition();
+  const ps = dueList().slice(0, MAINT_MAX);
+  if (!ps.length) { toast('点検が必要な問題はありません。コンディション100%！'); go('/home', true); return; }
+  return runQuiz(app, {
+    title: '今日のメンテ', problems: ps, mode: 'review', modeLabel: 'MAINTENANCE', drive: { ghost: null },
+    onExit: () => go('/home'),
+    onFinish: (res, dr) => {
+      const ok = res.filter(r => r.ok).length;
+      const first = !doneToday();
+      const bonus = completeMaint();
+      if (bonus) { addGP(bonus, 'メンテ完了', true); track('maint'); }
+      checkAchievements();
+      sfx.fanfare();
+      const after = condition();
+      app.innerHTML = `${topbar('🔧 今日のメンテ')}
+      <div class="page result-page"><div class="result-hero win maint-res">
+        <div class="en rh-label">MAINTENANCE ${after.n ? 'DONE' : 'COMPLETE'}</div>
+        <div class="maint-gauge big"><div class="mg-bar"><i class="${after.cls}" style="width:${after.pct}%"></i></div>
+          <div class="en mg-val">${before.pct}% → <b>${after.pct}%</b></div></div>
+        <div class="rh-score en">${ok}<small> / ${res.length}</small></div>
+        ${dr ? `<div class="small muted">LAP ${fmtLap(dr.lap)}　最大コンボ ${dr.maxCombo}</div>` : ''}
+        ${first ? `<div class="rh-gp en">+${bonus} GP</div><div>メンテ <b class="hl">${state.maint.streak}日連続</b>！${state.maint.streak >= 2 ? '' : '明日も続けるとボーナスアップ'}</div>` : ''}
+        <p class="muted small">正解した問題は、次の点検日がのびる（1→3→7→14→30日）。間違えた問題は明日以降にまた出るよ。</p>
+      </div>
+      <div class="row wrap result-btns">
+        <a class="btn" href="#/home">ホームへ</a>
+        ${after.n ? `<a class="btn btn-red btn-lg" href="#/maint" data-again>もう1セット（残り${after.n}問）</a>` : ''}
+      </div></div>`;
+      const ag = app.querySelector('[data-again]'); if (ag) ag.onclick = e => { e.preventDefault(); maintScreen(app); };
+    },
   });
 }
 

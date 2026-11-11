@@ -1,6 +1,6 @@
 // 保存データ管理（localStorage）
 const KEY = 'mathdrift.save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 function defaults() {
   return {
@@ -13,7 +13,8 @@ function defaults() {
     daily: { date: '', tasks: [], counts: {}, bonusClaimed: false },
     progress: {},      // stepId: {stars, best, cleared, hintless}
     battles: {},       // chapterId: {cleared, best}
-    history: {},       // problemId: {status, tries, wrong, last}
+    history: {},       // problemId: {status, tries, wrong, last, box, due}（box/due＝メンテの点検日）
+    maint: { last: '', streak: 0, total: 0 },
     memos: {},         // problemId: {strokes:[], text:''}
     seenStory: {},     // sceneId: true
     achievements: {},  // id: timestamp
@@ -44,7 +45,15 @@ function merge(base, data) {
 }
 
 function migrate(data) {
-  // 将来のバージョン移行用
+  // v2：メンテ（間隔をあけた復習）の点検日を、これまでの記録から作る
+  if ((data.version || 1) < 2) {
+    for (const h of Object.values(data.history || {})) {
+      if (h.box != null) continue;
+      const last = h.last || dateStr();
+      if (h.status === 'wrong') { h.box = 0; h.due = last; }
+      else { h.box = 1; h.due = addDays(last, 1); }
+    }
+  }
   data.version = SAVE_VERSION;
   return data;
 }
@@ -98,4 +107,5 @@ export function dateStr(d = new Date()) {
   return `${y}-${m}-${dd}`;
 }
 export function today() { return dateStr(); }
+export function addDays(s, n) { const [y, m, d] = s.split('-').map(Number); return dateStr(new Date(y, m - 1, d + n)); }
 export function yesterday() { const d = new Date(); d.setDate(d.getDate() - 1); return dateStr(d); }

@@ -1,5 +1,5 @@
 // ゲーミフィケーション：GP / XP / ランク / ログボ / 今日の課題 / 実績
-import { state, save, today, yesterday } from './state.js';
+import { state, save, today, yesterday, addDays } from './state.js';
 import { toast, sfx, seeded, shuffle } from './util.js';
 
 export const RANKS = [
@@ -60,6 +60,7 @@ const TASK_POOL = [
   { id: 'brief2', label: 'ブリーフィング（解説）を2つ読む', ev: 'brief', n: 2, gp: 40 },
   { id: 'battle1', label: 'ライバルバトルに挑戦する', ev: 'battle', n: 1, gp: 100 },
   { id: 'replay1', label: 'クリア済みステップを再走する', ev: 'replay', n: 1, gp: 60 },
+  { id: 'maint1', label: '今日のメンテを完了する', ev: 'maint', n: 1, gp: 80, needDue: true },
 ];
 export const DAILY_BONUS = 150;
 
@@ -69,7 +70,9 @@ export function ensureDaily() {
   const rnd = seeded('daily' + t + (state.created || ''));
   const hasWrong = Object.values(state.history).some(h => h.status === 'wrong');
   const base = shuffle(TASK_POOL.filter(x => x.base), rnd)[0];
-  const others = shuffle(TASK_POOL.filter(x => !x.base && (!x.needWrong || hasWrong) && (x.ev !== 'replay' || Object.keys(state.progress).length)), rnd).slice(0, 2);
+  const hasDue = Object.values(state.history).some(h => h.due && h.due <= t);
+  const pool = TASK_POOL.filter(x => !x.base && !x.needDue && (!x.needWrong || hasWrong) && (x.ev !== 'replay' || Object.keys(state.progress).length));
+  const others = hasDue ? [TASK_POOL.find(x => x.needDue), shuffle(pool, rnd)[0]] : shuffle(pool, rnd).slice(0, 2);
   state.daily = { date: t, tasks: [base, ...others].map(x => ({ id: x.id, label: x.label, ev: x.ev, n: x.n, gp: x.gp, done: false })), counts: {}, bonusClaimed: false };
   save();
   return state.daily;
@@ -93,6 +96,7 @@ export function track(ev, n = 1) {
 }
 
 // ===== 回答記録 =====
+export const INTERVALS = [0, 1, 3, 7, 14, 30]; // メンテの段階 → 次の点検までの日数
 const GP_TABLE = { practice: 5, main: 10, battle: 15, review: 5 };
 export function recordAnswer(pid, ok, mode, { memo = false } = {}) {
   const h = state.history[pid] || { status: 'new', tries: 0, wrong: 0, last: '' };
@@ -103,6 +107,11 @@ export function recordAnswer(pid, ok, mode, { memo = false } = {}) {
     if (prev === 'wrong') { h.status = 'revenge'; revenge = true; }
     else if (prev === 'new') h.status = 'correct';
   } else { h.status = 'wrong'; h.wrong++; }
+  // メンテの点検日：点検日以降に正解したら間隔をのばす。間違えたら今日に戻す
+  if (ok) {
+    if (h.box == null) h.box = 0;
+    if (!h.due || h.due <= h.last) { h.box = Math.min(INTERVALS.length - 1, h.box + 1); h.due = addDays(h.last, INTERVALS[h.box]); }
+  } else { h.box = 0; h.due = h.last; }
   state.history[pid] = h;
   state.stats.answered++;
   track('answer');
@@ -138,6 +147,10 @@ export const ACHIEVEMENTS = [
   { id: 'perf10', name: 'パーフェクトライン', desc: 'ノーミスクリア10回', test: s => s.stats.perfect >= 10 },
   { id: 'rev10', name: 'リベンジャー', desc: '間違えた問題を10問解き直す', test: s => s.stats.revenge >= 10 },
   { id: 'rev50', name: '不屈の走り屋', desc: '間違えた問題を50問解き直す', test: s => s.stats.revenge >= 50 },
+  { id: 'mt3', name: 'メンテ3日連続', desc: '今日のメンテを3日続けて完了', test: s => (s.maint?.streak || 0) >= 3 },
+  { id: 'mt7', name: '整備の鬼', desc: '今日のメンテを7日続けて完了', test: s => (s.maint?.streak || 0) >= 7 },
+  { id: 'gh10', name: 'ゴーストバスター', desc: '自分のゴーストを10回抜く', test: s => (s.stats.ghost || 0) >= 10 },
+  { id: 'cb10', name: 'フルブースト', desc: '1回の走行で10コンボ', test: s => (s.stats.combo10 || 0) >= 1 },
   { id: 'cust1', name: 'はじめてのカスタム', desc: 'パーツを買う', test: s => s.stats.customs >= 1 },
   { id: 'cars5', name: 'コレクター', desc: '車を5台持つ', test: s => s.garage.ownedCars.length >= 5 },
   { id: 'rankA', name: 'Aランク到達', desc: 'ドライバーランクA', test: s => s.xp >= 2000 },

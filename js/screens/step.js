@@ -8,6 +8,7 @@ import { steps, chapters, nextStep } from '../../data/curriculum/index.js';
 import { runQuiz } from '../components/quiz.js';
 import { addGP, track, checkAchievements } from '../gamify.js';
 import { carSVG, getConfig } from '../components/car-render.js';
+import { fmtLap } from '../components/drive.js';
 import { carById } from '../../data/cars.js';
 import { CHARS } from '../../data/story/index.js';
 import { playStory, hasScene } from './story.js';
@@ -84,23 +85,27 @@ export function stepScreen(app, { id }) {
     sfx.rev();
     cleanup = runQuiz(app, {
       title: `${st.label} ${st.title}`, problems: st.main, mode: 'main', modeLabel: '本番走行',
+      drive: { ghost: state.progress[id]?.splits || null },
       onExit: () => go(`/chapter/${ch.id}`),
-      onFinish: res => result(res),
+      onFinish: (res, dr) => result(res, dr),
     });
   }
 
-  function result(res) {
+  function result(res, dr) {
     const ok = res.filter(r => r.ok).length, total = res.length;
     const ratio = ok / total;
     const noHint = res.every(r => !r.hint);
     const s = ratio >= 1 ? (noHint ? 3 : 2) : ratio >= .8 ? 1 : 0;
     const old = state.progress[id] || { stars: 0, cleared: false, best: 0 };
+    const lapInfo = lapRecord(old, dr, s > 0);
     const rewards = [];
     if (s > 0 && !old.cleared) { rewards.push(['ステップ初クリア', 50]); track('stepClear'); }
     else if (s > 0 && old.cleared) track('replay');
     if (s > old.stars) rewards.push([`★ ${s - old.stars}個 獲得`, (s - old.stars) * 20]);
     if (ratio === 1) { state.stats.perfect++; track('perfect'); }
-    state.progress[id] = { stars: Math.max(old.stars, s), cleared: old.cleared || s > 0, best: Math.max(old.best || 0, Math.round(ratio * 100)) };
+    state.progress[id] = { ...old, stars: Math.max(old.stars, s), cleared: old.cleared || s > 0, best: Math.max(old.best || 0, Math.round(ratio * 100)), ...lapInfo.save };
+    if (lapInfo.beat) { state.stats.ghost = (state.stats.ghost || 0) + 1; rewards.push(['ゴースト撃破', 30]); }
+    if (dr && dr.maxCombo >= 10) state.stats.combo10 = (state.stats.combo10 || 0) + 1;
     save();
     rewards.forEach(([r, g]) => addGP(g, r, true));
     const gpSum = rewards.reduce((a, r) => a + r[1], 0);
@@ -116,7 +121,8 @@ export function stepScreen(app, { id }) {
         <div class="en rh-label">${s > 0 ? 'SECTOR CLEAR' : 'TRY AGAIN'}</div>
         <div class="rh-score en">${ok}<small> / ${total}</small></div>
         <div class="rh-stars">${stars(s)}</div>
-        <div class="muted">${s === 3 ? 'ヒントなしで全問正解！ パーフェクト！' : s === 2 ? '全問正解！ 次はヒントなしで★3を狙おう' : s === 1 ? 'クリア！ 全問正解で★2、ヒントなしで★3' : '8割以上の正解でクリア。解説を読んでもう一度チャレンジ！'}</div>
+        ${lapHTML(lapInfo, dr)}
+        <div class="next-goal">${nextGoal(s, ok, total, lapInfo)}</div>
         ${gpSum ? `<div class="rh-gp en">+${gpSum} GP</div>` : ''}
         ${rewards.map(r => `<div class="small">${r[0]}　+${r[1]}GP</div>`).join('')}
       </div>
@@ -125,7 +131,7 @@ export function stepScreen(app, { id }) {
         <div class="res-list">${res.map((r, i) => `<a class="res-item ${r.ok ? 'ok' : 'ng'}" href="#/pit/p/${r.id}"><b>${r.ok ? '○' : '×'}</b> Q${i + 1}${r.hint ? ' <small>(ヒント)</small>' : ''}</a>`).join('')}</div>
       </div>
       <div class="row wrap result-btns">
-        <button class="btn" data-act="retry">↺ 本番をもう一度</button>
+        <button class="btn btn-red" data-act="retry">↺ もう1本走る</button>
         <a class="btn" href="#/chapter/${ch.id}">ステージに戻る</a>
         ${nx ? `<a class="btn btn-primary btn-lg" href="#/step/${nx.id}">次のステップ ▶</a>` : `<a class="btn btn-red btn-lg" href="#/battle/${ch.id}">ライバルバトルへ ▶</a>`}
       </div>
@@ -182,6 +188,7 @@ export function battleScreen(app, { id }) {
       <div class="lane"><div class="lane-car rival" style="left:0%">${carSVG(rc.id, {}, { view: "side", small: true })}</div></div><div class="goal en">GOAL</div></div>`;
     cleanup = runQuiz(app, {
       title: `VS ${rch.name}`, problems: ch.battle, mode: 'battle', modeLabel: 'BATTLE', header,
+      drive: { ghost: state.battles[id]?.splits || null },
       onExit: () => go(`/chapter/${ch.id}`),
       onAnswer: (ok, p, first) => {
         if (!first) return;
@@ -191,17 +198,19 @@ export function battleScreen(app, { id }) {
         if (meEl) meEl.style.left = (mine / total * 86) + '%';
         if (rvEl) rvEl.style.left = (rv / total * 86) + '%';
       },
-      onFinish: res => finish(res),
+      onFinish: (res, dr) => finish(res, dr),
     });
   }
 
-  async function finish(res) {
+  async function finish(res, dr) {
     const ok = res.filter(r => r.ok).length, total = res.length;
     const pct = Math.round(ok / total * 100);
     const win = pct >= 70;
     const old = state.battles[id] || { cleared: false, best: 0 };
     const firstWin = win && !old.cleared;
-    state.battles[id] = { cleared: old.cleared || win, best: Math.max(old.best, pct) };
+    const lapInfo = lapRecord(old, dr, win);
+    state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...lapInfo.save };
+    if (lapInfo.beat) state.stats.ghost = (state.stats.ghost || 0) + 1;
     let unlocked = null;
     if (firstWin) {
       addGP(200, 'ライバル撃破ボーナス', true);
@@ -218,7 +227,8 @@ export function battleScreen(app, { id }) {
         <div class="en rh-pos">${win ? 'P1' : 'P2'}</div>
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
-        <div class="muted">${ok} / ${total} 問正解　${win ? '' : '（7割で勝利）'}</div>
+        <div class="muted">${ok} / ${total} 問正解　${win ? '' : `（7割で勝利：あと${Math.ceil(total * .7) - ok}問）`}</div>
+        ${lapHTML(lapInfo, dr)}
         ${firstWin ? `<div class="rh-gp en">+200 GP</div>` : ''}
         ${unlocked ? `<div class="unlock"><div class="en">NEW CAR</div>${carSVG(unlocked.id, {})}<b>${esc(unlocked.name)}</b> がガレージに入った！</div>` : ''}
       </div>
@@ -235,4 +245,32 @@ export function battleScreen(app, { id }) {
     if (firstWin && hasScene(id + '-outro')) setTimeout(() => playStory(id + '-outro'), 900);
   }
   return () => cleanup && cleanup();
+}
+
+// ===== LAPタイムの記録（ベストと区間タイム＝次回のゴースト） =====
+export function lapRecord(old, dr, valid) {
+  if (!dr) return { save: {} };
+  const prev = old.lap || null;
+  const better = valid && (!prev || dr.lap < prev);
+  return {
+    lap: dr.lap, prev, best: better ? dr.lap : prev, isBest: better, beat: better && !!prev,
+    save: better ? { lap: dr.lap, splits: dr.splits } : {},
+  };
+}
+export function lapHTML(li, dr) {
+  if (!dr) return '';
+  const d = li.prev ? dr.lap - li.prev : null;
+  return `<div class="rh-lap">
+    <div><span class="en muted">LAP</span> <b class="en">${fmtLap(dr.lap)}</b>
+      ${d != null ? `<span class="en dh-delta ${d <= 0 ? 'g' : 'r'}">${d <= 0 ? '−' : '＋'}${Math.abs(d).toFixed(1)}</span>` : ''}</div>
+    ${li.isBest ? `<div class="en rh-best">${li.prev ? 'NEW RECORD! ゴースト撃破' : 'FIRST RECORD'}</div>` : li.prev ? `<div class="small muted">ベスト ${fmtLap(li.prev)}</div>` : ''}
+    <div class="small muted">最大コンボ ${dr.maxCombo}${dr.boostGP ? `　ブーストボーナス +${dr.boostGP}GP` : ''}</div>
+  </div>`;
+}
+function nextGoal(s, ok, total, li) {
+  if (s === 0) return `🎯 あと <b>${Math.ceil(total * .8) - ok}問</b> 正解でクリア！`;
+  if (s === 1) return `🎯 次は全問正解で★2（あと${total - ok}問）`;
+  if (s === 2) return '🎯 次はヒントなしで★3！';
+  if (li.best) return `🎯 次の目標：${fmtLap(Math.max(0, li.best - 3))}（ベスト −3秒）`;
+  return '🏁 パーフェクト！';
 }

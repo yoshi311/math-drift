@@ -79,6 +79,7 @@ export const sfx = {
   ng() { if (!state.settings.sound) return; tone(196, .3, 'sawtooth', .08, 0, 120); },
   rev() { if (!state.settings.sound) return; tone(90, .7, 'sawtooth', .07, 0, 420); tone(60, .7, 'square', .04, 0, 260); },
   coin() { if (!state.settings.sound) return; tone(1568, .08, 'square', .06); tone(2093, .18, 'square', .06, .07); },
+  boost() { if (!state.settings.sound) return; tone(220, .35, 'sawtooth', .06, 0, 880); tone(1760, .12, 'square', .04, .3); },
   fanfare() { if (!state.settings.sound) return; [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'square', .07, i * .12)); tone(1047, .6, 'triangle', .08, .5); },
 };
 

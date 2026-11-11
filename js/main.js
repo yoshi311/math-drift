@@ -4,7 +4,7 @@ import { toast } from './util.js';
 import { titleScreen, homeScreen } from './screens/home.js';
 import { mapScreen, chapterScreen } from './screens/map.js';
 import { stepScreen, battleScreen } from './screens/step.js';
-import { pitScreen, pitSingle, notesScreen } from './screens/pit.js';
+import { pitScreen, pitSingle, notesScreen, maintScreen } from './screens/pit.js';
 import { garageScreen, dealerScreen } from './screens/garage.js';
 import { recordsScreen, settingsScreen, applySettings } from './screens/misc.js';
 
@@ -19,6 +19,7 @@ route('/step/:id', stepScreen);
 route('/battle/:id', battleScreen);
 route('/pit', pitScreen);
 route('/pit/p/:pid', pitSingle);
+route('/maint', maintScreen);
 route('/notes', notesScreen);
 route('/garage', garageScreen);
 route('/dealer', dealerScreen);
