@@ -58,4 +58,4 @@ node tools/e2e.mjs             # Edgeで全ステップを自動で解く通し�
 
 ## 3Dモデル
 
-車の3Dモデルは、Sketchfab で CC BY 4.0 で公開されている作品（AE86：Martin Trafas 氏、S13：bagged_ls 氏、EK9：GT Cars: Hyperspeed 氏 ほか、全21台）を、軽量化・向きと寸法の調整・色変更などの改変をして使用しています。作品名・作者・出典は models/CREDITS.md とアプリの「設定 → CREDITS」に載せています。
+車の3Dモデルは、Sketchfab で CC BY 4.0 で公開されている作品（AE86：Martin Trafas 氏、S13：bagged_ls 氏、EK9：GT Cars: Hyperspeed 氏 ほか、全22台）を、軽量化・向きと寸法の調整・色変更などの改変をして使用しています。作品名・作者・出典は models/CREDITS.md とアプリの「設定 → CREDITS」に載せています。

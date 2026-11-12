@@ -107,3 +107,7 @@ This work is based on "2010 Lexus LFA" (https://sketchfab.com/3d-models/2010-lex
 
 改変内容：座標の向き・単位の統一と実寸（全長）への拡大縮小、ホイールの切り出し、マテリアル名の変更、ポリゴンの間引き、テクスチャの縮小・WebP化、meshopt圧縮（tools/model-prep2.mjs）。アプリ内でボディ色の変更、ホイールの差しかえなどを行っています。
 
+## models/s15.glb（シルビア S15）
+This work is based on "2000 Nissan Silvia (S15)" (https://sketchfab.com/3d-models/2000-nissan-silvia-s15-86513ca79930451f8f73b1019451c583) by DisneyCars (https://sketchfab.com/supercarmodels) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+
+改変内容：座標の向き・単位の統一と実寸（全長）への拡大縮小、位置のずれた座席の除去、ホイールの切り出し、マテリアル名の変更、ポリゴンの間引き、テクスチャの縮小・WebP化、meshopt圧縮（tools/model-prep2.mjs）。アプリ内でボディ色の変更、ホイールの差しかえなどを行っています。

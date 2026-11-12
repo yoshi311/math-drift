@@ -20,5 +20,6 @@ export const MODEL_CREDITS = [
   {"car":"t2000gt","title":"Toyota 2000GT (MF10) 1967","url":"https://sketchfab.com/3d-models/toyota-2000gt-mf10-1967-5a9a443be8c645158a47989688241d3f","author":"Nieve5677","authorUrl":"https://sketchfab.com/iori308408"},
   {"car":"fk8","title":"Honda Civic TypeR FK8 Vaho 2018 | www.vecarz.com","url":"https://sketchfab.com/3d-models/honda-civic-typer-fk8-vaho-2018-wwwvecarzcom-c79e8d2fb2ba4796b5bbb07730413cdf","author":"vecarz","authorUrl":"https://sketchfab.com/heynic"},
   {"car":"r35","title":"Nissan GT-R (R35) Facelift","url":"https://sketchfab.com/3d-models/nissan-gt-r-r35-facelift-a90de78e5d0e41c8975b284773254a0e","author":"Mona x Supercars","authorUrl":"https://sketchfab.com/Car2022"},
-  {"car":"lfa","title":"2010 Lexus LFA","url":"https://sketchfab.com/3d-models/2010-lexus-lfa-05900382647c42d19ab925f23eabca62","author":"DisneyCars","authorUrl":"https://sketchfab.com/supercarmodels"}
+  {"car":"lfa","title":"2010 Lexus LFA","url":"https://sketchfab.com/3d-models/2010-lexus-lfa-05900382647c42d19ab925f23eabca62","author":"DisneyCars","authorUrl":"https://sketchfab.com/supercarmodels"},
+  {"car":"s15","title":"2000 Nissan Silvia (S15)","url":"https://sketchfab.com/3d-models/2000-nissan-silvia-s15-86513ca79930451f8f73b1019451c583","author":"DisneyCars","authorUrl":"https://sketchfab.com/supercarmodels"}
 ];

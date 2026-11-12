@@ -26,7 +26,7 @@ const MODELS = {
 };
 // そのほかの車：Sketchfab の CC BY 4.0 モデルを、開発用ツール（tools/model-prep2.mjs）で共通形式にしたもの
 // 共通形式：単位 m・前が +z・後端 z=0・地面 y=0。ボディ色＝Paint、ガラス＝Glass、ホイール＝Wheel_FL/FR/RL/RR（作者は models/CREDITS.md）
-for (const id of ['ae86l', 'r32', 'gc8', 'a80', 'nsx', 'na6', 'gr86', 'gryaris', 'kpgc10', 's30', 'fd3s', 'ct9a', 'rz34', 'r34', 't2000gt', 'fk8', 'r35', 'lfa'])
+for (const id of ['ae86l', 'r32', 'gc8', 's15', 'a80', 'nsx', 'na6', 'gr86', 'gryaris', 'kpgc10', 's30', 'fd3s', 'ct9a', 'rz34', 'r34', 't2000gt', 'fk8', 'r35', 'lfa'])
   MODELS[id] = { url: `../../models/${id}.glb`, scale: 1, zMin: 0, yMin: 0, paint: ['Paint'], tone: ['Tone'], glass: ['Glass'], wheel: /^Wheel_(FL|FR|RL|RR)$/ };
 const MODEL_SCENE = new Map(), MODEL_LOAD = new Map();
 // 読み込んだモデルは、メモリを食うので最近使った数台だけ残す（iPad 対策）

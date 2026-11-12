@@ -1,5 +1,5 @@
 // Service Worker：オフライン対応（キャッシュを返しつつ裏で最新に更新）
-const CACHE = 'mathdrift-v23';
+const CACHE = 'mathdrift-v24';
 const CORE = ['./', './index.html', './manifest.webmanifest', './css/base.css', './css/components.css', './css/screens.css', './js/main.js', './icons/icon-192.png'];
 
 self.addEventListener('install', e => {

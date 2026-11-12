@@ -125,5 +125,18 @@
   "paint": [
    "UvPaint1Mtl"
   ]
+ },
+ "s15": {
+  "fwd": "-z",
+  "drop": "^DriverSeat1Mtl$",
+  "paint": [
+   "Paint1Mtl"
+  ],
+  "glass": [
+   "Windows1Mtl"
+  ],
+  "tex": 512,
+  "rMax": 1.08,
+  "rPad": 1.01
  }
 }
