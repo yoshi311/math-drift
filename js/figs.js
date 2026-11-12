@@ -98,14 +98,14 @@ export function solid(kind, lab = {}) {
   let s = '';
   if (kind === 'cuboid' || kind === 'cube') {
     const w = kind === 'cube' ? 120 : 170, h = 120, d = 50;
-    const x = 40, y = 70;
+    const x = 70, y = 70;
     s += L(x, y, x + w, y) + L(x + w, y, x + w, y + h) + L(x + w, y + h, x, y + h) + L(x, y + h, x, y) +
       L(x, y, x + d, y - d * .7) + L(x + w, y, x + w + d, y - d * .7) + L(x + w, y + h, x + w + d, y + h - d * .7) + L(x + d, y - d * .7, x + w + d, y - d * .7) + L(x + w + d, y - d * .7, x + w + d, y + h - d * .7) +
       L(x + d, y - d * .7, x + d, y + h - d * .7, 1) + L(x + d, y + h - d * .7, x + w + d, y + h - d * .7, 1) + L(x, y + h, x + d, y + h - d * .7, 1);
     if (lab.a) s += txt(x + w / 2, y + h + 24, lab.a, { c: Y });
     if (lab.b) s += txt(x + w + d / 2 + 22, y + h - d * .35 + 6, lab.b, { c: Y });
     if (lab.c) s += txt(x - 10, y + h / 2 + 6, lab.c, { c: Y, a: 'end' });
-    return wrap(300, 230, s);
+    return wrap(330, 230, s);
   }
   if (kind === 'cylinder' || kind === 'cone') {
     const cx = 140, top = 40, bot = 190, rx = 70, ry = 18;
@@ -120,7 +120,8 @@ export function solid(kind, lab = {}) {
     if (lab.r) s += txt(cx + rx / 2, bot - 6, lab.r, { c: Y });
     if (lab.h) s += txt(cx + rx + 12, (top + bot) / 2, lab.h, { c: Y, a: 'start' });
     if (lab.l) s += txt(cx - rx / 2 - 18, (top + bot) / 2, lab.l, { c: Y, a: 'end' });
-    return wrap(280, 225, s);
+    if (lab.d) s += L(cx - rx, bot, cx + rx, bot, 1) + txt(cx, bot + ry + 22, lab.d, { c: Y });
+    return wrap(280, lab.d ? 240 : 225, s);
   }
   if (kind === 'pyramid') {
     const A = [70, 180], B = [190, 180], Cc = [230, 140], D = [110, 140], P = [150, 30];
