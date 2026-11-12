@@ -64,7 +64,7 @@ export function garageScreen(app) {
         return `<button class="swatch ${on ? 'on' : ''} ${own ? '' : 'locked'}" ${own ? `data-set="${key}" data-v="${c.hex}"` : `data-buy="${c.id}"`}>
           <span class="sw" style="background:${c.hex}"></span><small>${esc(c.name)}</small>${own ? '' : `<em>${c.price}GP</em>`}</button>`;
       }).join('')}</div>
-      <div class="row wrap" style="margin-top:12px">${owned('color-custom') ? `<label class="btn">🎨 自由に調色 <input type="color" data-color="${key}" value="${cfg[key]}"></label>` : `<button class="btn btn-yellow" data-buy="color-custom">🎨 カスタムカラーを解放（1500GP）</button>`}</div>`;
+      <div class="row wrap" style="margin-top:12px">${owned('color-custom') ? `<label class="btn">🎨 自由に調色 <input type="color" data-color="${key}" value="${cfg[key]}"></label>` : `<button class="btn btn-yellow" data-buy="color-custom">🎨 カスタムカラーを解放（${fmtNum(COLORS.find(x => x.id === 'color-custom').price)}GP）</button>`}</div>`;
     }
     if (tab === 'susp') {
       const cur = PARTS.susp.find(p => p.id === (cfg.susp || 'susp-stock')) || PARTS.susp[0];
@@ -173,12 +173,18 @@ export function dealerScreen(app) {
         const own = state.garage.ownedCars.includes(c.id);
         let foot;
         if (own) foot = `<button class="btn btn-sm" data-ride="${c.id}">${state.garage.current === c.id ? '乗車中' : 'この車に乗る'}</button>`;
-        else if (c.price) foot = `<button class="btn btn-sm btn-yellow" data-buycar="${c.id}">${fmtNum(c.price)} GP で購入</button>`;
+        else if (c.price) {
+          // 目標が見えるように：所持GPの進み具合と、あといくつ
+          const pct = Math.min(100, Math.floor(state.gp / c.price * 100)), rest = c.price - state.gp;
+          foot = `<div class="dc-goal"><div class="dc-bar"><i style="width:${pct}%"></i></div><small>${rest > 0 ? `あと <b class="en">${fmtNum(rest)}</b> GP` : '購入できます！'}</small></div>
+            <button class="btn btn-sm btn-yellow" data-buycar="${c.id}">${fmtNum(c.price)} GP で購入</button>`;
+        }
         else if (c.unlock && chapters[c.unlock]) foot = `<span class="chip r">🔒 ${chapters[c.unlock].gradeName} STAGE ${chapters[c.unlock].no} のライバルに勝つ</span>`;
         else foot = '';
         return `<div class="dealer-card ${own ? 'own' : ''}">${carSVG(c.id, own ? getConfig(state, c.id) : {})}
           <div class="dc-name"><span class="chip c">${c.maker}</span> <span class="chip">${c.tag}</span><br><b>${esc(c.name)}</b></div>
           <div class="muted small">${c.year}年 / ${c.drive} / ${c.ps}ps / ${c.kg}kg</div>
+          ${c.market ? `<div class="dc-market small">中古相場の目安 <b>${esc(c.market)}</b></div>` : ''}
           <div class="small">${esc(c.desc)}</div><div class="dc-foot">${foot}</div></div>`;
       }).join('')}</div>
     </div>`;

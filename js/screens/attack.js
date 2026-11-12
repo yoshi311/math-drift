@@ -94,7 +94,7 @@ export function attackScreen(app) {
     newly.forEach(r => rec.passed.push(r.char));
     if (after.pos === 1) state.stats.attackTop = (state.stats.attackTop || 0) + 1;
     save();
-    const gp = (first ? 100 : 0) + newly.length * 50;
+    const gp = (first ? 200 : 0) + newly.length * 100;
     if (gp) addGP(gp, 'スコアアタック', true);
     track('attack');
     checkAchievements();

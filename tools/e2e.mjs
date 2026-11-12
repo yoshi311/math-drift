@@ -101,7 +101,7 @@ async function runQuizToEnd(wrongIdx = new Set(), label = '') {
   await shot('e2e-home-login');
   await click('.modal [data-i="0"]'); await sleep(600);
   const gp1 = await ev(`JSON.parse(localStorage.getItem('mathdrift.save')).gp`);
-  assert(gp1 === 350, 'login bonus +50 → 350 GP (got ' + gp1 + ')');
+  assert(gp1 === 400, 'login bonus +100 → 400 GP (got ' + gp1 + ')');
 
   // 1章の全ステップ＋各章の最初のステップで全問を解いて採点を確認
   const { stepsToRun } = { stepsToRun: await ev(`(async()=>{const {chapters}=await import('./data/curriculum/index.js'); const out=[]; for(const c of Object.values(chapters)){ c.allSteps.forEach(s=>out.push(s.id)); } return out;})()`) };

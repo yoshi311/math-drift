@@ -23,5 +23,5 @@ export function completeMaint() {
   state.maint.streak = state.maint.last === yesterday() ? state.maint.streak + 1 : 1;
   state.maint.last = t; state.maint.total = (state.maint.total || 0) + 1;
   save();
-  return 50 + Math.min(50, (state.maint.streak - 1) * 10);
+  return 100 + Math.min(100, (state.maint.streak - 1) * 20);
 }

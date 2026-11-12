@@ -258,6 +258,11 @@ input[type=color]{width:44px;height:32px;border:0;background:none;padding:0;marg
 .dealer-card{border:1px solid var(--line);border-radius:var(--radius);padding:12px;background:#121722;display:flex;flex-direction:column;gap:6px}
 .dealer-card.own{border-color:rgba(0,229,255,.4)}
 .dc-foot{margin-top:auto}
+.dc-market{color:var(--yellow,#ffd400);margin-top:2px}
+.dc-goal{margin-bottom:6px}
+.dc-goal small{color:var(--muted,#9aa3b5)}
+.dc-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:3px}
+.dc-bar i{display:block;height:100%;background:linear-gradient(90deg,#00e5ff,#ffd400)}
 
 /* records & settings */
 .rec-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}

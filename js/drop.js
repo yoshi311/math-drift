@@ -5,7 +5,7 @@ import { modal, esc, sfx } from './util.js';
 import { addGP, checkAchievements } from './gamify.js';
 
 const ODDS = { base: { N: 70, R: 25, SR: 5 }, good: { N: 50, R: 38, SR: 12 }, great: { N: 25, R: 45, SR: 30 } };
-const GP_BY = { N: 60, R: 150, SR: 400 }; // その等級を全部持っていたときのGP
+const GP_BY = { N: 120, R: 300, SR: 800 }; // その等級を全部持っていたときのGP
 
 export function rollDrop(quality = 'base', rnd = Math.random) {
   const o = ODDS[quality] || ODDS.base;

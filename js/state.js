@@ -1,6 +1,6 @@
 // 保存データ管理（localStorage）
 const KEY = 'mathdrift.save';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 function defaults() {
   return {
@@ -55,6 +55,8 @@ function migrate(data) {
       else { h.box = 1; h.due = addDays(last, 1); }
     }
   }
+  // v3：獲得GPを2倍にし、ランクの必要XPも2倍にした。これまでのXPを2倍にして、ランクが下がらないようにする
+  if ((data.version || 1) < 3) data.xp = (data.xp || 0) * 2;
   data.version = SAVE_VERSION;
   return data;
 }
@@ -63,7 +65,7 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return defaults();
-    return migrate(merge(defaults(), JSON.parse(raw)));
+    const r = JSON.parse(raw); return migrate({ ...merge(defaults(), r), version: r.version || 1 });
   } catch (e) {
     console.warn('load failed', e);
     return defaults();
@@ -90,7 +92,7 @@ export function exportJSON() {
 export function importJSON(text) {
   const data = JSON.parse(text);
   if (!data || typeof data !== 'object' || !data.garage) throw new Error('バックアップファイルの形式が違います');
-  const fresh = migrate(merge(defaults(), data));
+  const fresh = migrate({ ...merge(defaults(), data), version: data.version || 1 });
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, fresh);
   save(true);

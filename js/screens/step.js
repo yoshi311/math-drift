@@ -100,12 +100,12 @@ export function stepScreen(app, { id }) {
     const old = state.progress[id] || { stars: 0, cleared: false, best: 0 };
     const sc = scoreRecord(old, dr, s > 0);
     const rewards = [];
-    if (s > 0 && !old.cleared) { rewards.push(['ステップ初クリア', 50]); track('stepClear'); }
+    if (s > 0 && !old.cleared) { rewards.push(['ステップ初クリア', 100]); track('stepClear'); }
     else if (s > 0 && old.cleared) track('replay');
-    if (s > old.stars) rewards.push([`★ ${s - old.stars}個 獲得`, (s - old.stars) * 20]);
+    if (s > old.stars) rewards.push([`★ ${s - old.stars}個 獲得`, (s - old.stars) * 40]);
     if (ratio === 1) { state.stats.perfect++; track('perfect'); }
     state.progress[id] = { ...old, stars: Math.max(old.stars, s), cleared: old.cleared || s > 0, best: Math.max(old.best || 0, Math.round(ratio * 100)), ...sc.save };
-    if (sc.beat) { state.stats.hiscore = (state.stats.hiscore || 0) + 1; rewards.push(['ハイスコア更新', 30]); }
+    if (sc.beat) { state.stats.hiscore = (state.stats.hiscore || 0) + 1; rewards.push(['ハイスコア更新', 50]); }
     if (dr && dr.maxCombo >= 10) state.stats.combo10 = (state.stats.combo10 || 0) + 1;
     save();
     rewards.forEach(([r, g]) => addGP(g, r, true));
@@ -223,11 +223,11 @@ export function battleScreen(app, { id }) {
     const firstWin = win && !old.cleared;
     const sc = scoreRecord(old, dr, win);
     state.battles[id] = { ...old, cleared: old.cleared || win, best: Math.max(old.best, pct), ...sc.save, ...(firstHard ? { hard: true } : {}) };
-    if (firstHard) addGP(300, 'ハードモード制覇', true);
+    if (firstHard) addGP(600, 'ハードモード制覇', true);
     if (sc.beat) state.stats.hiscore = (state.stats.hiscore || 0) + 1;
     let unlocked = null;
     if (firstWin) {
-      addGP(200, 'ライバル撃破ボーナス', true);
+      addGP(500, 'ライバル撃破ボーナス', true);
       const car = (await import('../../data/cars.js')).CARS.find(c => c.unlock === id);
       if (car && !state.garage.ownedCars.includes(car.id)) { state.garage.ownedCars.push(car.id); unlocked = car; }
     }
@@ -242,9 +242,9 @@ export function battleScreen(app, { id }) {
         <div class="en rh-label">${win ? 'YOU WIN!' : 'LOSE…'}</div>
         <div class="rh-score en">${pct}<small>%</small></div>
         <div class="muted">${ok} / ${total} 問正解　${saved && win && ok / total < .7 ? `<b class="hc">GRIPで${saved}ミスをカバー！</b>` : ''}${win ? '' : `（${hard ? 8 : 7}割で勝利：あと${Math.ceil(total * NEED) - ok - saved}問）`}</div>
-        ${firstHard ? '<div class="rh-gp en">HARD CLEAR +300 GP</div>' : ''}
+        ${firstHard ? '<div class="rh-gp en">HARD CLEAR +600 GP</div>' : ''}
         ${scoreHTML(sc, dr)}
-        ${firstWin ? `<div class="rh-gp en">+200 GP</div>` : ''}
+        ${firstWin ? `<div class="rh-gp en">+500 GP</div>` : ''}
         ${unlocked ? `<div class="unlock"><div class="en">NEW CAR</div>${carSVG(unlocked.id, {})}<b>${esc(unlocked.name)}</b> がガレージに入った！</div>` : ''}
       </div>
       <div class="panel"><div class="panel-title">REVIEW</div>

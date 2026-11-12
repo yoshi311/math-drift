@@ -3,8 +3,8 @@ import { state, save, today, yesterday, addDays } from './state.js';
 import { toast, sfx, seeded, shuffle } from './util.js';
 
 export const RANKS = [
-  { name: 'ROOKIE', xp: 0 }, { name: 'C', xp: 200 }, { name: 'B', xp: 800 }, { name: 'A', xp: 2000 },
-  { name: 'S', xp: 4500 }, { name: 'SS', xp: 8000 }, { name: 'LEGEND', xp: 13000 },
+  { name: 'ROOKIE', xp: 0 }, { name: 'C', xp: 400 }, { name: 'B', xp: 1600 }, { name: 'A', xp: 4000 },
+  { name: 'S', xp: 9000 }, { name: 'SS', xp: 16000 }, { name: 'LEGEND', xp: 26000 },
 ];
 export function rankInfo(xp = state.xp) {
   let i = 0; while (i + 1 < RANKS.length && xp >= RANKS[i + 1].xp) i++;
@@ -29,14 +29,14 @@ export function spendGP(n) {
 }
 
 // ===== ログインボーナス =====
-export const LOGIN_REWARDS = [50, 60, 70, 80, 100, 120, 300];
+export const LOGIN_REWARDS = [100, 120, 140, 160, 200, 240, 500];
 export function checkLogin() {
   const t = today();
   if (state.login.last === t) return null;
   const streak = state.login.last === yesterday() ? state.login.streak + 1 : 1;
   state.login.last = t; state.login.streak = streak; state.login.total = (state.login.total || 0) + 1;
   const day = ((streak - 1) % 7) + 1;
-  const gp = LOGIN_REWARDS[day - 1] + Math.min(100, Math.floor((streak - 1) / 7) * 20);
+  const gp = LOGIN_REWARDS[day - 1] + Math.min(200, Math.floor((streak - 1) / 7) * 40);
   state.login.pending = { day, gp, streak };
   save();
   return state.login.pending;
@@ -49,21 +49,21 @@ export function claimLogin() {
 
 // ===== 今日の課題 =====
 const TASK_POOL = [
-  { id: 'correct10', label: '問題に10問正解する', ev: 'correct', n: 10, gp: 60, base: true },
-  { id: 'answer15', label: '15問にチャレンジする', ev: 'answer', n: 15, gp: 60, base: true },
-  { id: 'correct20', label: '問題に20問正解する', ev: 'correct', n: 20, gp: 100 },
-  { id: 'step1', label: 'ステップを1つクリアする', ev: 'stepClear', n: 1, gp: 80 },
-  { id: 'step2', label: 'ステップを2つクリアする', ev: 'stepClear', n: 2, gp: 120 },
-  { id: 'revenge2', label: 'ピットインで2問解き直して正解', ev: 'revenge', n: 2, gp: 90, needWrong: true },
-  { id: 'perfect1', label: '本番走行をノーミスでクリア', ev: 'perfect', n: 1, gp: 100 },
-  { id: 'memo1', label: 'メモに書きこんで1問解く', ev: 'memo', n: 1, gp: 40 },
-  { id: 'brief2', label: 'ブリーフィング（解説）を2つ読む', ev: 'brief', n: 2, gp: 40 },
-  { id: 'battle1', label: 'ライバルバトルに挑戦する', ev: 'battle', n: 1, gp: 100 },
-  { id: 'replay1', label: 'クリア済みステップを再走する', ev: 'replay', n: 1, gp: 60 },
-  { id: 'attack1', label: 'スコアアタックを1本走る', ev: 'attack', n: 1, gp: 60, needAttack: true },
-  { id: 'maint1', label: '今日のメンテを完了する', ev: 'maint', n: 1, gp: 80, needDue: true },
+  { id: 'correct10', label: '問題に10問正解する', ev: 'correct', n: 10, gp: 90, base: true },
+  { id: 'answer15', label: '15問にチャレンジする', ev: 'answer', n: 15, gp: 90, base: true },
+  { id: 'correct20', label: '問題に20問正解する', ev: 'correct', n: 20, gp: 150 },
+  { id: 'step1', label: 'ステップを1つクリアする', ev: 'stepClear', n: 1, gp: 120 },
+  { id: 'step2', label: 'ステップを2つクリアする', ev: 'stepClear', n: 2, gp: 180 },
+  { id: 'revenge2', label: 'ピットインで2問解き直して正解', ev: 'revenge', n: 2, gp: 140, needWrong: true },
+  { id: 'perfect1', label: '本番走行をノーミスでクリア', ev: 'perfect', n: 1, gp: 150 },
+  { id: 'memo1', label: 'メモに書きこんで1問解く', ev: 'memo', n: 1, gp: 60 },
+  { id: 'brief2', label: 'ブリーフィング（解説）を2つ読む', ev: 'brief', n: 2, gp: 60 },
+  { id: 'battle1', label: 'ライバルバトルに挑戦する', ev: 'battle', n: 1, gp: 150 },
+  { id: 'replay1', label: 'クリア済みステップを再走する', ev: 'replay', n: 1, gp: 90 },
+  { id: 'attack1', label: 'スコアアタックを1本走る', ev: 'attack', n: 1, gp: 90, needAttack: true },
+  { id: 'maint1', label: '今日のメンテを完了する', ev: 'maint', n: 1, gp: 120, needDue: true },
 ];
-export const DAILY_BONUS = 150;
+export const DAILY_BONUS = 300;
 
 export function ensureDaily() {
   const t = today();
@@ -99,7 +99,7 @@ export function track(ev, n = 1) {
 
 // ===== 回答記録 =====
 export const INTERVALS = [0, 1, 3, 7, 14, 30]; // メンテの段階 → 次の点検までの日数
-const GP_TABLE = { practice: 5, main: 10, battle: 15, review: 5 };
+const GP_TABLE = { practice: 10, main: 20, battle: 30, review: 10 };
 export function recordAnswer(pid, ok, mode, { memo = false } = {}) {
   const h = state.history[pid] || { status: 'new', tries: 0, wrong: 0, last: '' };
   const prev = h.status;
@@ -122,8 +122,8 @@ export function recordAnswer(pid, ok, mode, { memo = false } = {}) {
   if (ok) {
     state.stats.correct++;
     track('correct');
-    gp = GP_TABLE[mode] || 5;
-    if (revenge) { gp += 10; state.stats.revenge++; track('revenge'); }
+    gp = GP_TABLE[mode] || 10;
+    if (revenge) { gp += 20; state.stats.revenge++; track('revenge'); }
     addGP(gp, '', true);
   }
   save();
@@ -158,8 +158,8 @@ export const ACHIEVEMENTS = [
   { id: 'drop10', name: 'パーツハンター', desc: '部品箱でパーツを10個手に入れる', test: s => (s.stats.drops || 0) >= 10 },
   { id: 'cust1', name: 'はじめてのカスタム', desc: 'パーツを買う', test: s => s.stats.customs >= 1 },
   { id: 'cars5', name: 'コレクター', desc: '車を5台持つ', test: s => s.garage.ownedCars.length >= 5 },
-  { id: 'rankA', name: 'Aランク到達', desc: 'ドライバーランクA', test: s => s.xp >= 2000 },
-  { id: 'legend', name: 'LEGEND', desc: '伝説のランクへ', test: s => s.xp >= 13000 },
+  { id: 'rankA', name: 'Aランク到達', desc: 'ドライバーランクA', test: s => s.xp >= 4000 },
+  { id: 'legend', name: 'LEGEND', desc: '伝説のランクへ', test: s => s.xp >= 26000 },
 ];
 export function checkAchievements() {
   for (const a of ACHIEVEMENTS) {
