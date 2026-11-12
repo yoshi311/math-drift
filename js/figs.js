@@ -241,3 +241,131 @@ export function tree({ levels = [], distinct = false, labels = [] } = {}) {
   labels.forEach((l, d) => { s += txt(30 + d * colW + 40, 12, l, { c: M, fs: 11 }); });
   return wrap(w, Math.max(h, 60), s);
 }
+
+// ===== 文章題用 =====
+// 文字のおおよその幅（全角＝fs、半角＝0.58fs）
+const tw = (s, fs) => [...String(s).replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? fs : fs * .58), 0);
+const carPath = (x, y, c, dir = 1) => `<g transform="translate(${x},${y}) scale(${dir < 0 ? -1 : 1},1)"><path d="M-17,3 L-17,-3 Q-16,-6 -10,-6 L-5,-12 L6,-12 L11,-6 L15,-5 Q18,-4 18,3 Z" fill="${c}"/><path d="M-3,-10 L5,-10 L8,-6 L-6,-6 Z" fill="#0b0f18" opacity=".55"/><circle cx="-9" cy="4" r="4" fill="#0b0f18" stroke="${c}" stroke-width="1.5"/><circle cx="10" cy="4" r="4" fill="#0b0f18" stroke="${c}" stroke-width="1.5"/></g>`;
+// はさみ線（区間の長さ）
+const span = (x1, x2, y, label, c = Y) => {
+  const a = Math.min(x1, x2), b = Math.max(x1, x2);
+  let s = `<line x1="${a}" y1="${y - 7}" x2="${a}" y2="${y + 7}" stroke="${c}" stroke-width="1.8"/><line x1="${b}" y1="${y - 7}" x2="${b}" y2="${y + 7}" stroke="${c}" stroke-width="1.8"/>`;
+  s += `<line x1="${a + 2}" y1="${y}" x2="${b - 2}" y2="${y}" stroke="${c}" stroke-width="1.8"/><path d="M${a + 1},${y} l8,-4 v8z M${b - 1},${y} l-8,-4 v8z" fill="${c}"/>`;
+  if (label) s += txt((a + b) / 2, y - 6, label, { c, fs: 14 });
+  return s;
+};
+
+// コース図：min〜max の道路に、地点（marks）・車（cars）・区間（spans）をかく
+// marks [{at, label, flag}] / cars [{at, label, v, dir, c, lv}] / spans [{from, to, label, lv, c}]
+// signed: true で目盛りの数（0 は黄）を出す。step: 目盛りの間隔
+export function course({ min = 0, max = 10, marks = [], cars = [], spans = [], signed = false, step = 1, unit = '', w = 560, pos = '' } = {}) {
+  const pad = 40, X = v => pad + (v - min) / (max - min) * (w - 2 * pad);
+  const rows = cars.length ? Math.max(...cars.map(c => c.lv || 0)) + 1 : 0;
+  const ty = 14 + rows * 40 + (rows ? 4 : 0), rh = 22, by = ty + rh;
+  let s = `<rect x="${pad - 18}" y="${ty}" width="${w - 2 * pad + 36}" height="${rh}" rx="4" fill="#2a3145"/><line x1="${pad - 12}" y1="${ty + rh / 2}" x2="${w - pad + 12}" y2="${ty + rh / 2}" stroke="#7f8aa3" stroke-width="1.5" stroke-dasharray="10 8"/>`;
+  let ly = by + 18;
+  if (signed) {
+    for (let v = min; v <= max + 1e-9; v += step) s += `<line x1="${X(v)}" y1="${by}" x2="${X(v)}" y2="${by + 6}" stroke="${T}" stroke-width="1.5"/>` + txt(X(v), by + 21, String(+v.toFixed(2)).replace('-', '−'), { c: Math.abs(v) < 1e-9 ? Y : M, fs: 13 });
+    ly = by + 26;
+  }
+  marks.forEach(m => {
+    const x = X(m.at);
+    s += `<line x1="${x}" y1="${ty - 8}" x2="${x}" y2="${by + 4}" stroke="${m.c || T}" stroke-width="2.5"/>`;
+    if (m.flag) s += `<path d="M${x},${ty - 8} l14,4 l-14,4z" fill="${m.c || Y}"/>`;
+    if (m.label) s += txt(x, ly + (signed ? 16 : 0), m.label, { c: m.c || T, fs: 13 });
+  });
+  if (marks.some(m => m.label)) ly += 14 + (signed ? 16 : 0);
+  cars.forEach(c => {
+    const x = X(c.at), d = c.dir ?? 1, col = c.c || [C, R, Y][cars.indexOf(c) % 3], y0 = 14 + (c.lv || 0) * 40;
+    s += carPath(x, ty + rh / 2 + 1, col, d);
+    if (d) s += `<line x1="${x - d * 16}" y1="${y0 + 26}" x2="${x + d * 14}" y2="${y0 + 26}" stroke="${col}" stroke-width="2.5"/><path d="M${x + d * 22},${y0 + 26} l${-d * 9},-5 v10z" fill="${col}"/>`;
+    const t = [c.label, c.v].filter(Boolean).join(' '), half = tw(t, 14) / 2;
+    s += txt(Math.max(4 + half, Math.min(w - 4 - half, x)), y0 + 12, t, { c: col, fs: 14 });
+  });
+  const lvs = spans.length ? Math.max(...spans.map(p => p.lv || 0)) + 1 : 0;
+  spans.forEach(p => { s += span(X(p.from), X(p.to), ly + 20 + (p.lv || 0) * 30, p.label, p.c); });
+  if (unit || pos) s += txt(w - 6, ty - 6, [pos && pos + ' →', unit].filter(Boolean).join('　'), { c: M, fs: 12, a: 'end' });
+  return wrap(w, ly + 8 + lvs * 30, s);
+}
+
+// 線分図（テープ図）：rows [{name, x0, parts:[{w, label, c, dash}], under:[{from, to, label}]}]
+// 幅は数量の単位で指定（全行で同じ尺度）。guides: 全行を通る点線の位置（数量）
+export function tape({ rows = [], guides = [], w = 560, nameW = null } = {}) {
+  const nw = nameW ?? Math.max(0, ...rows.map(r => tw(r.name || '', 14))) + (rows.some(r => r.name) ? 14 : 0);
+  const tot = Math.max(...rows.map(r => (r.x0 || 0) + r.parts.reduce((a, p) => a + p.w, 0)), 1);
+  const x0 = 10 + nw, sc = (w - x0 - 14) / tot, X = v => x0 + v * sc;
+  const ys = []; let y = 22;
+  rows.forEach(r => { ys.push(y); y += 28 + ((r.under || []).length ? Math.max(...r.under.map(u => u.lv || 0)) * 26 + 40 : 20); });
+  let s = '';
+  rows.forEach((r, i) => {
+    const yy = ys[i]; let v = r.x0 || 0;
+    if (r.name) s += txt(nw, yy + 19, r.name, { a: 'end', fs: 14, c: M });
+    r.parts.forEach((p, j) => {
+      const col = p.c || [C, Y, R, '#7cff6b'][j % 4], xa = X(v), xb = X(v + p.w);
+      s += `<rect x="${xa}" y="${yy}" width="${xb - xa}" height="26" fill="${p.dash ? 'none' : col}" fill-opacity=".22" stroke="${col}" stroke-width="2"${p.dash ? ' stroke-dasharray="5 4"' : ''}/>`;
+      if (p.label) { const lw = tw(p.label, 13), fits = lw < xb - xa - 4, cx = fits ? (xa + xb) / 2 : Math.max(4 + lw / 2, Math.min(w - 4 - lw / 2, (xa + xb) / 2)); s += txt(cx, fits ? yy + 18 : yy - 5, p.label, { c: col, fs: 13 }); }
+      v += p.w;
+    });
+    (r.under || []).forEach(u => { s += span(X(u.from), X(u.to), yy + 50 + (u.lv || 0) * 26, u.label, u.c || T); });
+  });
+  guides.forEach(g => { s += `<line x1="${X(g)}" y1="10" x2="${X(g)}" y2="${y - 10}" stroke="${M}" stroke-width="1.5" stroke-dasharray="4 4"/>`; });
+  return wrap(w, y - 4, s);
+}
+
+// タンクの変化：steps [{v, label, text}]（v: 量、null なら「?」）、changes ['−4L', …]（タンクの間）
+export function tank({ cap = 50, steps = [], changes = [], unit = 'L', ticks = 5 } = {}) {
+  const n = steps.length, tw0 = 66, th = 120, gap = Math.max(96, ...changes.map(c => tw(c ?? '', 14) + 34)), w = 20 + n * tw0 + (n - 1) * gap + 20, top = 30, h = top + th + 34;
+  let s = '';
+  steps.forEach((st, i) => {
+    const x = 20 + i * (tw0 + gap), known = st.v != null, v = known ? st.v : cap * .5, fh = th * Math.max(0, Math.min(1, v / cap));
+    s += txt(x + tw0 / 2, top - 10, st.label || '', { c: M, fs: 13 });
+    s += `<rect x="${x}" y="${top + th - fh}" width="${tw0}" height="${fh}" fill="${C}" fill-opacity="${known ? .35 : .15}"${known ? '' : ` stroke="${C}" stroke-dasharray="5 4"`}/>`;
+    for (let k = 1; k < ticks; k++) s += `<line x1="${x}" y1="${top + th * k / ticks}" x2="${x + 10}" y2="${top + th * k / ticks}" stroke="${M}" stroke-width="1.2"/>`;
+    s += `<rect x="${x}" y="${top}" width="${tw0}" height="${th}" rx="6" fill="none" stroke="${T}" stroke-width="2.5"/>`;
+    s += txt(x + tw0 / 2, top + th + 22, st.text ?? (known ? st.v + unit : '?'), { c: known ? T : Y, fs: 15 });
+    if (i < n - 1 && changes[i] != null) {
+      const ax = x + tw0 + 12, bx = x + tw0 + gap - 12, ay = top + th / 2;
+      s += `<line x1="${ax}" y1="${ay}" x2="${bx - 6}" y2="${ay}" stroke="${Y}" stroke-width="2.5"/><path d="M${bx},${ay} l-10,-6 v12z" fill="${Y}"/>` + txt((ax + bx) / 2, ay - 10, changes[i], { c: Y, fs: 14 });
+    }
+  });
+  return wrap(w, h, s);
+}
+
+// 流れ図（ギアのつながりなど）：steps [{label, sub, rev}]。from/to は両端の丸の文字
+// rev: true なら回転の向きが逆になるギア（赤）、false はチェーン（水色）
+export function flow({ steps = [], from = '入口', to = '出口', fromSub = '右回り', toSub = '?' } = {}) {
+  const n = steps.length, end = 74, gap = 26, bw = 100, h = 118, cy = 54;
+  const used = n * bw + (n + 1) * gap + 2 * end, w = Math.max(560, used), x0 = (w - used) / 2;
+  const node = (x, a, b, c) => `<circle cx="${x}" cy="${cy}" r="30" fill="none" stroke="${c}" stroke-width="2.5"/>` + txt(x, cy - 2, a, { fs: 14, c }) + txt(x, cy + 16, b, { fs: 13, c: c === Y ? Y : M });
+  const arrow = (a, b) => `<line x1="${a}" y1="${cy}" x2="${b - 7}" y2="${cy}" stroke="${M}" stroke-width="2"/><path d="M${b},${cy} l-9,-5 v10z" fill="${M}"/>`;
+  let s = node(x0 + end / 2, from, fromSub, T), x = x0 + end;
+  steps.forEach(st => {
+    const c = st.rev ? R : C, bx = x + gap;
+    s += arrow(x - (x === x0 + end ? end / 2 - 30 : 0), bx);
+    s += `<rect x="${bx}" y="${cy - 34}" width="${bw}" height="68" rx="10" fill="${c}" fill-opacity=".12" stroke="${c}" stroke-width="2"/>`;
+    s += `<circle cx="${bx + 16}" cy="${cy - 18}" r="8" fill="none" stroke="${c}" stroke-width="5" stroke-dasharray="3 2.3"/>`;
+    s += txt(bx + bw / 2 + 8, cy - 13, st.rev ? '向き逆' : (st.kind || 'そのまま'), { c, fs: 12 }) + txt(bx + bw / 2, cy + 16, st.label, { fs: 16 });
+    if (st.sub) s += txt(bx + bw / 2, cy + 50, st.sub, { c: M, fs: 12 });
+    x = bx + bw;
+  });
+  s += arrow(x, x + gap + end / 2 - 30) + node(x + gap + end / 2, to, toSub, Y);
+  return wrap(w, h, s);
+}
+
+// かみ合う2つのギア：a, b = { name, teeth, rpm }（数は文字列で。わからない所は '?'）
+export function gearPair(a, b) {
+  const R = t => 26 + (parseFloat(t) || 30) * 1.6;
+  const r1 = R(a.teeth), r2 = R(b.teeth), cy = 22 + Math.max(r1, r2), c1 = 40 + r1, c2 = c1 + r1 + r2 + 8, w = Math.max(560, c2 + r2 + 40), h = cy + Math.max(r1, r2) + 62;
+  const gear = (cx, r, n, col) => {
+    const k = parseFloat(n) || 30, seg = 2 * Math.PI * r / k / 2;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-dasharray="${seg.toFixed(2)} ${seg.toFixed(2)}"/><circle cx="${cx}" cy="${cy}" r="${r - 5}" fill="${col}" fill-opacity=".12" stroke="${col}" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="6" fill="${col}"/>`;
+  };
+  const rot = (cx, r, cw, col) => { const rr = r * .55, a0 = -2.4, a1 = -0.7; const p = t => [cx + rr * Math.cos(t), cy + rr * Math.sin(t)]; const [s0, s1] = cw ? [p(a0), p(a1)] : [p(a1), p(a0)]; return `<path d="M${s0[0].toFixed(1)},${s0[1].toFixed(1)} A${rr},${rr} 0 0 ${cw ? 1 : 0} ${s1[0].toFixed(1)},${s1[1].toFixed(1)}" fill="none" stroke="${col}" stroke-width="2.5" marker-end="url(#ga)"/>`; };
+  let s = `<defs><marker id="ga" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="${T}"/></marker></defs>`;
+  s += gear(c1, r1, a.teeth, C) + gear(c2, r2, b.teeth, Y) + rot(c1, r1, true, T) + rot(c2, r2, false, T);
+  [[c1, a, C], [c2, b, Y]].forEach(([cx, g, col]) => {
+    const y0 = cy + Math.max(r1, r2) + 20;
+    s += txt(cx, y0, g.name || '', { c: col, fs: 14 }) + txt(cx, y0 + 18, '歯数 ' + g.teeth, { c: g.teeth === '?' ? Y : T, fs: 14 }) + (g.rpm == null ? '' : txt(cx, y0 + 36, g.rpm === '?' ? '毎分 ? 回転' : '毎分' + g.rpm + '回転', { c: g.rpm === '?' ? Y : T, fs: 14 }));
+  });
+  return wrap(w, h, s);
+}
