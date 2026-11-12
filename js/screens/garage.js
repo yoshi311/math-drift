@@ -26,6 +26,9 @@ export function garageScreen(app) {
     const car = carById(carId);
     const cfg = getConfig(state, carId);
     const stt = carStats(car, cfg);
+    // 作り直しても、タブ・車の列・ページの横／縦スクロール位置を保つ
+    const keep = ['.tabs', '.car-strip', '.part-area'].map(q => [q, app.querySelector(q)?.scrollLeft || 0]);
+    const sy = window.scrollY, pg = app.querySelector('.page'), py = pg ? pg.scrollTop : 0;
     app.innerHTML = `${topbar('🚗 ガレージ', { right: '<a class="btn btn-sm btn-yellow" href="#/dealer">カーディーラー</a>' })}
     <div class="page garage">
       <section class="garage-view panel neon">
@@ -45,6 +48,9 @@ export function garageScreen(app) {
         <div class="part-area">${partArea(cfg)}</div>
       </section>
     </div>`;
+    keep.forEach(([q, x]) => { const e = app.querySelector(q); if (e) e.scrollLeft = x; });
+    const pg2 = app.querySelector('.page'); if (pg2) pg2.scrollTop = py;
+    window.scrollTo(0, sy);
     const el = app.querySelector('.gv-car');
     mountCarViewer(el, carId, cfg).then(v => { if (!v) return; if (my !== seq || !el.isConnected) { v.dispose(); return; } viewer = v; el.classList.add('is3d'); });
   };
