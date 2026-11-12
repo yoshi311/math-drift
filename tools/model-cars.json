@@ -1,0 +1,129 @@
+{
+ "a80": {
+  "paint": [
+   "esta80"
+  ],
+  "glass": [
+   "esta80_glass_clear",
+   "esta80_glass"
+  ]
+ },
+ "ae86l": {
+  "fwd": "+z",
+  "paint": [
+   "01_Primary"
+  ],
+  "glass": [
+   "Windows"
+  ]
+ },
+ "ct9a": {
+  "paint": [
+   "Body_Paint"
+  ],
+  "glass": [
+   "Glass_Material"
+  ]
+ },
+ "fd3s": {
+  "paint": [
+   "Material.007"
+  ],
+  "glass": [
+   "Material.003"
+  ]
+ },
+ "fk8": {
+  "paint": [
+   "Honda_CivicTypeRVaris_2017Paint_Material"
+  ],
+  "glass": [
+   "Honda_CivicTypeRVaris_2017Window_Material"
+  ]
+ },
+ "gc8": {
+  "fwd": "-z",
+  "paint": [
+   "Body1Mtl"
+  ],
+  "tex": 512,
+  "target": 130000
+ },
+ "gr86": {
+  "fwd": "-x",
+  "paint": [
+   "Paint2Mtl",
+   "Paint1Mtl"
+  ]
+ },
+ "gryaris": {},
+ "lfa": {
+  "paint": [
+   "Metallic"
+  ]
+ },
+ "na6": {
+  "paint": [
+   "Material.002"
+  ],
+  "glass": [
+   "Material.010"
+  ]
+ },
+ "nsx": {
+  "paint": [
+   "Material.003"
+  ],
+  "glass": [
+   "Material.004"
+  ]
+ },
+ "r32": {
+  "fwd": "-z",
+  "paint": [
+   "Meshpart8Mtl"
+  ]
+ },
+ "r34": {
+  "paint": [
+   "Material.001"
+  ]
+ },
+ "r35": {
+  "paint": [
+   "NNissan_GTRTNR0_2017PaintTNR_Material1"
+  ],
+  "glass": [
+   "NNissan_GTRTNR0_2017Window_Material1"
+  ]
+ },
+ "s30": {
+  "paint": [
+   "280z_CarPaint"
+  ]
+ },
+ "t2000gt": {
+  "up": "+z",
+  "fwd": "+y",
+  "paint": [
+   "carpaint"
+  ],
+  "glass": [
+   "windowglass"
+  ]
+ },
+ "kpgc10": {
+  "paint": [
+   "Body",
+   "Doors",
+   "Bumper"
+  ],
+  "target": 110000,
+  "tex": 512
+ },
+ "rz34": {
+  "paint": [
+   "UvPaint1Mtl"
+  ]
+ }
+}

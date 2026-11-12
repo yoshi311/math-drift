@@ -1,0 +1,24 @@
+// 3Dモデルの作者表示（すべて CC BY 4.0。アプリ内の CREDITS と models/CREDITS.md に使う）
+export const MODEL_CREDITS = [
+  {"car":"ae86","title":"Toyota AE86 Sprinter Trueno Zenki","url":"https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9","author":"Martin Trafas","authorUrl":"https://sketchfab.com/Bexxie"},
+  {"car":"s13","title":"1992 Nissan Silvia S13","url":"https://sketchfab.com/3d-models/1992-nissan-silvia-s13-6fa8f1948f954e3b980b5e96f203815a","author":"bagged_ls","authorUrl":"https://sketchfab.com/lstance"},
+  {"car":"ek9","title":"Honda Civic Type R (EK9)","url":"https://sketchfab.com/3d-models/honda-civic-type-r-ek9-4df76c1974cd4173a7a941bfec7714ab","author":"GT Cars: Hyperspeed","authorUrl":"https://sketchfab.com/Car2022"},
+  {"car":"ae86l","title":"Toyota AE86 Black Limited Kouki","url":"https://sketchfab.com/3d-models/toyota-ae86-black-limited-kouki-80854ba302034431b517f523db328129","author":"Martin Trafas","authorUrl":"https://sketchfab.com/Bexxie"},
+  {"car":"r32","title":"1993 Nissan Skyline GT-R (R32)","url":"https://sketchfab.com/3d-models/1993-nissan-skyline-gt-r-r32-3dd3ec06afc146449425da8e939c94e1","author":"DisneyCars","authorUrl":"https://sketchfab.com/supercarmodels"},
+  {"car":"gc8","title":"Subaru Impreza WRX STi Version VI (GC8)","url":"https://sketchfab.com/3d-models/subaru-impreza-wrx-sti-version-vi-gc8-457f01e7e8d14b088e3f092c1be9e75c","author":"Mona x Supercars","authorUrl":"https://sketchfab.com/Car2022"},
+  {"car":"a80","title":"Toyota Supra mk4","url":"https://sketchfab.com/3d-models/toyota-supra-mk4-8bebdee25b774067929bb33e648533ac","author":"Black Snow","authorUrl":"https://sketchfab.com/BlackSnow02"},
+  {"car":"nsx","title":"Honda NSX 1990","url":"https://sketchfab.com/3d-models/honda-nsx-1990-1cc15628a00a4739a6b6c01128927c8d","author":"Lexyc16","authorUrl":"https://sketchfab.com/Lexyc16"},
+  {"car":"na6","title":"Mazda Miata MX-5 NA","url":"https://sketchfab.com/3d-models/mazda-miata-mx-5-na-d51fcd44b74f4daf8012c41e0400c041","author":"Lexyc16","authorUrl":"https://sketchfab.com/Lexyc16"},
+  {"car":"gr86","title":"Toyota GR86 (ZN8)","url":"https://sketchfab.com/3d-models/toyota-gr86-zn8-4919d14eba9640599e838230e8e5ed74","author":"Mona x Supercars","authorUrl":"https://sketchfab.com/Car2022"},
+  {"car":"gryaris","title":"2023 Toyota GRMN Yaris","url":"https://sketchfab.com/3d-models/2023-toyota-grmn-yaris-64b59fd607594eea8f737c9dc33a6067","author":"Nazh Design","authorUrl":"https://sketchfab.com/NazhDesign"},
+  {"car":"kpgc10","title":"1970 Nissan Skyline - High Poly Interior","url":"https://sketchfab.com/3d-models/1970-nissan-skyline-high-poly-interior-b00cbb09d26449d3ae89f0ec3f534bfe","author":"Marc Ed","authorUrl":"https://sketchfab.com/marc.edouard.lepine17"},
+  {"car":"s30","title":"[FREE] Datsun 280Z","url":"https://sketchfab.com/3d-models/free-datsun-280z-0789ab2ece9442de94b3c41595e0ecbd","author":"Martin Trafas","authorUrl":"https://sketchfab.com/Bexxie"},
+  {"car":"fd3s","title":"Mazda RX-7 FD","url":"https://sketchfab.com/3d-models/mazda-rx-7-fd-d35ff630df614771b82e7b2f59035b1e","author":"Lexyc16","authorUrl":"https://sketchfab.com/Lexyc16"},
+  {"car":"ct9a","title":"Mitsubishi Lancer Evolution IX","url":"https://sketchfab.com/3d-models/mitsubishi-lancer-evolution-ix-ee88ad9414884bdabaf0658943ac339b","author":"Benit Kibabu","authorUrl":"https://sketchfab.com/benitkibabu"},
+  {"car":"rz34","title":"2023 Nissan Z (RZ34)","url":"https://sketchfab.com/3d-models/2023-nissan-z-rz34-17668144004c4e7d96bcee3e418d1b66","author":"supercarmodels","authorUrl":"https://sketchfab.com/supercarmodels"},
+  {"car":"r34","title":"Nissan Skyline R34 GT-R","url":"https://sketchfab.com/3d-models/nissan-skyline-r34-gt-r-ff8fb2251dfa4bb9979e7022c5a6666c","author":"Lexyc16","authorUrl":"https://sketchfab.com/Lexyc16"},
+  {"car":"t2000gt","title":"Toyota 2000GT (MF10) 1967","url":"https://sketchfab.com/3d-models/toyota-2000gt-mf10-1967-5a9a443be8c645158a47989688241d3f","author":"Nieve5677","authorUrl":"https://sketchfab.com/iori308408"},
+  {"car":"fk8","title":"Honda Civic TypeR FK8 Vaho 2018 | www.vecarz.com","url":"https://sketchfab.com/3d-models/honda-civic-typer-fk8-vaho-2018-wwwvecarzcom-c79e8d2fb2ba4796b5bbb07730413cdf","author":"vecarz","authorUrl":"https://sketchfab.com/heynic"},
+  {"car":"r35","title":"Nissan GT-R (R35) Facelift","url":"https://sketchfab.com/3d-models/nissan-gt-r-r35-facelift-a90de78e5d0e41c8975b284773254a0e","author":"Mona x Supercars","authorUrl":"https://sketchfab.com/Car2022"},
+  {"car":"lfa","title":"2010 Lexus LFA","url":"https://sketchfab.com/3d-models/2010-lexus-lfa-05900382647c42d19ab925f23eabca62","author":"DisneyCars","authorUrl":"https://sketchfab.com/supercarmodels"}
+];

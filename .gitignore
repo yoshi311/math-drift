@@ -4,3 +4,4 @@ Thumbs.db
 *.log
 __pycache__/
 3D/
+_tmp/

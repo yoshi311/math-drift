@@ -24,15 +24,30 @@ const MODELS = {
   ek9: { url: '../../models/ek9.glb', scale: 1.0626, zMin: -1.8783, yMin: .0015,
     paint: ['Body_MAT'], tone: [], glass: ['Glass_MAT', 'Glass_02_MAT'], wheel: /^Wheel_(FL|FR|RL|RR)_\d+$/ },
 };
+// そのほかの車：Sketchfab の CC BY 4.0 モデルを、開発用ツール（tools/model-prep2.mjs）で共通形式にしたもの
+// 共通形式：単位 m・前が +z・後端 z=0・地面 y=0。ボディ色＝Paint、ガラス＝Glass、ホイール＝Wheel_FL/FR/RL/RR（作者は models/CREDITS.md）
+for (const id of ['ae86l', 'r32', 'gc8', 'a80', 'nsx', 'na6', 'gr86', 'gryaris', 'kpgc10', 's30', 'fd3s', 'ct9a', 'rz34', 'r34', 't2000gt', 'fk8', 'r35', 'lfa'])
+  MODELS[id] = { url: `../../models/${id}.glb`, scale: 1, zMin: 0, yMin: 0, paint: ['Paint'], tone: ['Tone'], glass: ['Glass'], wheel: /^Wheel_(FL|FR|RL|RR)$/ };
 const MODEL_SCENE = new Map(), MODEL_LOAD = new Map();
+// 読み込んだモデルは、メモリを食うので最近使った数台だけ残す（iPad 対策）
+const KEEP = 3;
+function touchModel(id) {
+  if (!MODEL_SCENE.has(id)) return;
+  const sc = MODEL_SCENE.get(id); MODEL_SCENE.delete(id); MODEL_SCENE.set(id, sc);
+  while (MODEL_SCENE.size > KEEP) {
+    const [old, osc] = MODEL_SCENE.entries().next().value;
+    MODEL_SCENE.delete(old); MODEL_LOAD.delete(old);
+    osc.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { for (const k in x) if (x[k]?.isTexture) x[k].dispose(); x.dispose(); }); });
+  }
+}
 export function hasModel(id) { return !!MODELS[id]; }
 export function loadModel(id) {
   if (!MODELS[id]) return Promise.resolve(null);
   if (!MODEL_LOAD.has(id)) MODEL_LOAD.set(id, new Promise(res => {
     const l = new GLTFLoader(); l.setMeshoptDecoder(MeshoptDecoder);
-    l.load(new URL(MODELS[id].url, import.meta.url).href, g => { g.scene.traverse(o => { o.userData.shared = true; if (o.isMesh) { o.castShadow = true; } }); MODEL_SCENE.set(id, g.scene); res(g.scene); }, undefined, e => { console.warn('model load failed', id, e); res(null); });
+    l.load(new URL(MODELS[id].url, import.meta.url).href, g => { g.scene.traverse(o => { o.userData.shared = true; if (o.isMesh) { o.castShadow = true; } }); MODEL_SCENE.set(id, g.scene); touchModel(id); res(g.scene); }, undefined, e => { console.warn('model load failed', id, e); MODEL_LOAD.delete(id); res(null); });
   }));
-  return MODEL_LOAD.get(id);
+  return MODEL_LOAD.get(id).then(sc => { touchModel(id); return sc; });
 }
 // glbからボディを組む（塗装・ツートン・ガラスの濃さを差しかえ、ホイールは車高と別に動かす）
 function buildFromModel(id, cfg, mats, root, bodyG) {

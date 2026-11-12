@@ -58,4 +58,4 @@ node tools/e2e.mjs             # Edgeで全ステップを自動で解く通し�
 
 ## 3Dモデル
 
-AE86の3Dモデルは、Martin Trafas 氏の「Toyota AE86 Sprinter Trueno Zenki」（[Sketchfab](https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9)、[CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)）を軽量化・改変して使用しています。S13の3Dモデルは、bagged_ls 氏の「1992 Nissan Silvia S13」（[Sketchfab](https://sketchfab.com/3d-models/1992-nissan-silvia-s13-6fa8f1948f954e3b980b5e96f203815a)、[CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)）を改変して使用しています。EK9の3Dモデルは、GT Cars: Hyperspeed 氏の「Honda Civic Type R (EK9)」（[Sketchfab](https://sketchfab.com/3d-models/honda-civic-type-r-ek9-4df76c1974cd4173a7a941bfec7714ab)、[CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)）を改変して使用しています。詳しくは models/CREDITS.md。
+車の3Dモデルは、Sketchfab で CC BY 4.0 で公開されている作品（AE86：Martin Trafas 氏、S13：bagged_ls 氏、EK9：GT Cars: Hyperspeed 氏 ほか、全21台）を、軽量化・向きと寸法の調整・色変更などの改変をして使用しています。作品名・作者・出典は models/CREDITS.md とアプリの「設定 → CREDITS」に載せています。
