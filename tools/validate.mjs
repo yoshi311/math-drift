@@ -8,7 +8,8 @@ const { GRADES, problems, steps } = await import('../data/curriculum/index.js');
 const { gradeValue } = await import('../js/mathfmt.js');
 
 let errors = 0, warns = 0;
-const VAGUE = /補正値|候補の数|ゼッケン候補|の計算をしよう|を計算する。.*を計算しよう|評価点/;
+const FIGNEED = /△|▱|∠[A-Zxa-z]|[^A-Z][A-Z]{2}[＝=＞＜]|辺[A-Z]{2}|半径|直径|母線|底面|点 ?\(|図で|図の|箱ひげ図|ヒストグラム|角形|角柱|角錐|円柱|円錐|球/;
+const VAGUE =/補正値|候補の数|ゼッケン候補|の計算をしよう|を計算する。.*を計算しよう|評価点/;
 const CAR = /車|カー|レース|タイヤ|エンジン|ホイール|ガレージ|サーキット|峠|コース|ラップ|タイム|周|ドリフト|チューン|チューニング|パーツ|ウイング|エアロ|燃料|ガソリン|燃費|ギア|スプロケット|マフラー|ブレーキ|ピット|パドック|ドライバー|スピード|速さ|速度|時速|走|バトル|ライバル|ハンドル|ボディ|塗装|ステッカー|ターボ|馬力|排気|気筒|タンク|メカ|整備|ミオ|カイト|ゲン|源一郎|チーム|ゴール|スタート|コーナー|カーブ|オイル|ゼッケン|ピストン|ボルト|ナット|ステアリング|シフト|ブースト|ボンネット|ストレート|空力|クルー|バルブ|プラグ|セッティング|ECU|セクター|サスペンション|バネ|重量配分|GP|ロールケージ|ジャッキ|工具|テレメトリー|メーター|トランク|パイロン|ノーズコーン|ボールジョイント|予算|ワイパー|ヒューズ|スタンド|観客|ターンパイク|首都高|湾岸|箱根|PA|グリッド|R32|AE86|EK9|S13|携行缶|給油|赤城|碓氷|榛名|ハチロク|シルビア|シビック|GT-R|部品|カーボン|ヘアピン|S字/;
 const err = (p, m) => { errors++; console.log('ERROR', p, m); };
 const warn = (p, m) => { warns++; console.log('WARN ', p, m); };
@@ -41,6 +42,10 @@ for (const p of Object.values(problems)) {
   if (p.q && !CAR.test(p.q)) err(p.id, 'question has no car topic: ' + p.q.slice(0, 40));
   // 意味のない数の言いかえ（場面と数値に必然性がない）
   if (p.q && VAGUE.test(p.q)) warn(p.id, 'vague car context: ' + p.q.slice(0, 40));
+  // 前の問題を参照する問題は、メンテやスコアアタックで1問だけ出ると意味が通らない
+  if (p.q && /^上の/.test(p.q.replace(/<[^>]+>/g, ''))) err(p.id, 'refers to previous problem: ' + p.q.slice(0, 40));
+  // 図形・グラフを前提にした問題に図がない（図が不要なら nofig: true）
+  if (p.q && !p.fig && !p.nofig && FIGNEED.test(p.q.replace(/<[^>]+>/g, ''))) warn(p.id, 'needs figure? ' + p.q.replace(/<[^>]+>/g, '').slice(0, 50));
 }
 
 let total = 0;
